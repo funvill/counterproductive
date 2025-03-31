@@ -10,19 +10,17 @@
  * 
  */
 
-static const String VERSION = "Ver 1"; // Version
+static const String VERSION = "Ver 2";  // Version
 
 // Pins
 // ------------------------------------------------------
 static const int PIN_BUTTON = 22;     // D4
 static const int PIN_MATRIX_CS = 23;  // D5
 
-
-//
-
 // Global
 // ------------------------------------------------------
 static int g_counter = 0;
+static boolean g_wait_for_mqtt_recv = true; 
 
 // Button Debounce
 // ------------------------------------------------------
@@ -35,14 +33,6 @@ int lastButtonState = LOW;  // the previous reading from the input pin
 // milliseconds, will quickly become a bigger number than can be stored in an int.
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
-
-
-// LED Blin
-// Generally, you should use "unsigned long" for variables that hold time
-// The value will quickly become too large for an int to store
-unsigned long ledPreviousMillis = 0;  // will store last time LED was updated
-// constants won't change:
-const long ledInterval = 1000;  // interval at which to blink (milliseconds)
 
 // LED Matrix
 // ------------------------------------------------------
@@ -62,14 +52,103 @@ const long ledInterval = 1000;  // interval at which to blink (milliseconds)
 // Hardware SPI connection
 MD_Parola ledMatrix = MD_Parola(HARDWARE_TYPE, PIN_MATRIX_CS, MAX_DEVICES);
 
+// Wifi & MQTT
+// -----------------------------------------------------
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>  //ESP8266 Core WiFi Library
+#else
+#include <WiFi.h>  //ESP32 Core WiFi Library
+#endif
+
+#include <WiFiClient.h>
+#include <PubSubClient.h>
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+
+#include "settings.h"
+
+
+// Update these with values suitable for your network.
+// const char* SETTING_WIFI_SSID = "your_wifi_name";
+// const char* SETTING_WIFI_PASSWORD = "your_wifi_password";
+// const char* SETTING_WIFI_MQTT_SERVER_HOST = "<your_cluster_url>";
+// const int SETTING_WIFI_MQTT_SERVER_PORT = 8883;
+// const char* SETTING_WIFI_MQTT_USERNAME = "";
+// const char* SETTING_WIFI_MQTT_PASSWORD = "";
+// const char* SETTING_WIFI_MQTT_TOPIC_COUNT = "CounterProductive/count";
+// const char* SETTING_WIFI_MQTT_TOPIC_BIRTH = "CounterProductive/birth";
+
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    ledMatrix.print("W rec");
+    Serial.print("Attempting MQTT connection...");
+    // Attempt to connect
+    if (client.connect("arduinoClient")) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      client.publish(SETTING_WIFI_MQTT_TOPIC_BIRTH, "I am alive");
+      // ... and resubscribe
+      client.subscribe(SETTING_WIFI_MQTT_TOPIC_COUNT);
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
+
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+
+  // look for the SETTING_WIFI_MQTT_TOPIC_COUNT topic
+  if (String(topic) == SETTING_WIFI_MQTT_TOPIC_COUNT) {
+    // Convert the payload to a string
+    String message = String((char*)payload).substring(0, length);
+    // Convert the string to an integer
+    g_counter = message.toInt();
+    Serial.print("MQTT Recv g_counter: ");
+    Serial.println(g_counter);
+    ledMatrix.print(g_counter);
+
+    g_wait_for_mqtt_recv = false; // We got the first recive.
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 
 // the setup function runs once when you press reset or power the board
 void setup() {
-  // initialize serial communications at 9600 bps:
+  delay(500);
+  // When opening the Serial Monitor, select 9600 Baud
   Serial.begin(9600);
+  delay(500);
 
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(LED_BUILTIN, OUTPUT);
@@ -86,16 +165,62 @@ void setup() {
   ledMatrix.displayClear();   // clear led matrix display
   ledMatrix.setTextAlignment(PA_RIGHT);
 
-  // Print version 
+  // Print version
   ledMatrix.print(VERSION);
-  delay(1000*3);
+  delay(1000 * 3);
+
+
+  // WIFI
+  ledMatrix.print("W0");
+  // connecting to a WiFi network
+  WiFi.begin(SETTING_WIFI_SSID, SETTING_WIFI_PASSWORD);
+  static int wifiAttempts = 0 ; 
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    wifiAttempts++;
+    Serial.print("Connecting to WiFi.. attempt: ");
+    Serial.println(wifiAttempts);
+  }
+  
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  //connecting to a mqtt broker
+  client.setServer(SETTING_WIFI_MQTT_SERVER_HOST, SETTING_WIFI_MQTT_SERVER_PORT);
+  client.setCallback(callback);
 
   // ToDo: Get the current number from the internet
-  ledMatrix.print("0"); // 
+  ledMatrix.print("0");  //
+}
+
+void UpdateCounter(int count) {
+  if(g_wait_for_mqtt_recv)  {
+    // We are waiting for the first recive before we can change the count
+    return; 
+  }
+
+  // String text = g_counter;
+  ledMatrix.print(count);
+
+  // Send MQTT message
+  Serial.println("");
+  Serial.print("MQTT Send g_counter=");
+  Serial.println(count);
+  String message = String(count);
+  const boolean retain = true; 
+  client.publish(SETTING_WIFI_MQTT_TOPIC_COUNT, message.c_str(), retain);
+  
 }
 
 
 void CheckButton() {
+  if(g_wait_for_mqtt_recv) {
+    // Don't bother until we get the first recive
+    return ;    
+  }
   // read the state of the switch into a local variable:
   int reading = digitalRead(PIN_BUTTON);
 
@@ -126,13 +251,12 @@ void CheckButton() {
         g_counter++;
 
         // print the results to the Serial Monitor:
+        Serial.println("");
         Serial.print("Button pressed. g_counter: ");
         Serial.println(g_counter);
 
-        // String text = g_counter;
-        ledMatrix.print(g_counter);
-
-        // ToDo Push to the internet
+        // Update screen and MQTT        
+        UpdateCounter(g_counter);
       }
     }
   }
@@ -146,11 +270,20 @@ void CheckButton() {
 
 // the loop function runs over and over again forever
 void loop() {
+
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+
+  // Button
   CheckButton();
 
+  // LED
   unsigned long currentMillis = millis();
 
-  // Status button 
+  // Status button
   static long builtInLEDTimer = 0;
   if (currentMillis >= builtInLEDTimer + 1000) {
     // save the last time you blinked the LED
