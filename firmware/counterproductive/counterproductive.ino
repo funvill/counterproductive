@@ -1,16 +1,15 @@
 /**
  * Title: Counterproductive
-*
+ *
  * Created by: Steven Smethurst
  * Created on: 2025-March-30
  *
  * Repo: https://github.com/funvill/counterproductive
- * Project details: https://blog.abluestar.com/projects/2025-counterproductive/ 
- * 
- * 
+ * Project details: https://blog.abluestar.com/projects/2025-counterproductive/
+ *
  */
 
-static const String VERSION = "Ver 2";  // Version
+static const String VERSION = "Ver 3";  // Version
 
 // Pins
 // ------------------------------------------------------
@@ -20,7 +19,8 @@ static const int PIN_MATRIX_CS = 23;  // D5
 // Global
 // ------------------------------------------------------
 static int g_counter = 0;
-static boolean g_wait_for_mqtt_recv = true; 
+static long g_lastButtonPress = 0;  // Last time the button was pressed
+static boolean g_wait_for_mqtt_recv = true;
 
 // Button Debounce
 // ------------------------------------------------------
@@ -41,6 +41,11 @@ unsigned long debounceDelay = 50;    // the debounce time; increase if the outpu
 #include <MD_Parola.h>
 #include <MD_MAX72xx.h>
 #include <SPI.h>
+
+uint8_t scrollSpeed = 50;                    // set initial scroll speed, can be a value between 10 (max) and 150 (min)
+textPosition_t scrollAlign = PA_LEFT;        // scroll align
+uint16_t scrollPause = 2000;                 // scroll pause in milliseconds
+static char matrixBuffer[128];  // 20 characters is enough for "00:00:00"
 
 // Define the number of devices we have in the chain and the hardware interface
 // NOTE: These pin numbers will probably not work with your hardware and may
@@ -66,9 +71,7 @@ MD_Parola ledMatrix = MD_Parola(HARDWARE_TYPE, PIN_MATRIX_CS, MAX_DEVICES);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-
 #include "settings.h"
-
 
 // Update these with values suitable for your network.
 // const char* SETTING_WIFI_SSID = "your_wifi_name";
@@ -79,7 +82,6 @@ PubSubClient client(espClient);
 // const char* SETTING_WIFI_MQTT_PASSWORD = "";
 // const char* SETTING_WIFI_MQTT_TOPIC_COUNT = "CounterProductive/count";
 // const char* SETTING_WIFI_MQTT_TOPIC_BIRTH = "CounterProductive/birth";
-
 
 void reconnect() {
   // Loop until we're reconnected
@@ -103,9 +105,7 @@ void reconnect() {
   }
 }
 
-
-
-void callback(char* topic, byte* payload, unsigned int length) {
+void callback(char *topic, byte *payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
@@ -117,31 +117,15 @@ void callback(char* topic, byte* payload, unsigned int length) {
   // look for the SETTING_WIFI_MQTT_TOPIC_COUNT topic
   if (String(topic) == SETTING_WIFI_MQTT_TOPIC_COUNT) {
     // Convert the payload to a string
-    String message = String((char*)payload).substring(0, length);
+    String message = String((char *)payload).substring(0, length);
     // Convert the string to an integer
     g_counter = message.toInt();
     Serial.print("MQTT Recv g_counter: ");
     Serial.println(g_counter);
-    ledMatrix.print(g_counter);
 
-    g_wait_for_mqtt_recv = false; // We got the first recive.
+    g_wait_for_mqtt_recv = false;  // We got the first recive.
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -169,61 +153,62 @@ void setup() {
   ledMatrix.print(VERSION);
   delay(1000 * 3);
 
-
   // WIFI
   ledMatrix.print("W0");
   // connecting to a WiFi network
   WiFi.begin(SETTING_WIFI_SSID, SETTING_WIFI_PASSWORD);
-  static int wifiAttempts = 0 ; 
+  static int wifiAttempts = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     wifiAttempts++;
     Serial.print("Connecting to WiFi.. attempt: ");
     Serial.println(wifiAttempts);
   }
-  
 
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  //connecting to a mqtt broker
+  // connecting to a mqtt broker
   client.setServer(SETTING_WIFI_MQTT_SERVER_HOST, SETTING_WIFI_MQTT_SERVER_PORT);
   client.setCallback(callback);
 
-  // ToDo: Get the current number from the internet
-  ledMatrix.print("0");  //
+  // Set to known value
+  ledMatrix.print("wait");
+
+  // Set the last button press to now
+  g_lastButtonPress = millis();  // Set the last button press to now
 }
 
 void UpdateCounter(int count) {
-  if(g_wait_for_mqtt_recv)  {
+  if (g_wait_for_mqtt_recv) {
     // We are waiting for the first recive before we can change the count
-    return; 
+    return;
   }
 
-  // String text = g_counter;
-  ledMatrix.print(count);
+  // Update the buffer with 
+  sprintf(matrixBuffer, "%d", count);
+  ledMatrix.displayText(matrixBuffer, PA_RIGHT, scrollSpeed, scrollPause, PA_SCROLL_UP, PA_SCROLL_UP);
 
   // Send MQTT message
   Serial.println("");
   Serial.print("MQTT Send g_counter=");
   Serial.println(count);
   String message = String(count);
-  const boolean retain = true; 
+  const boolean retain = true;
   client.publish(SETTING_WIFI_MQTT_TOPIC_COUNT, message.c_str(), retain);
-  
+
+  g_lastButtonPress = millis();  // Set the last button press to now
 }
 
-
 void CheckButton() {
-  if(g_wait_for_mqtt_recv) {
+  if (g_wait_for_mqtt_recv) {
     // Don't bother until we get the first recive
-    return ;    
+    return;
   }
   // read the state of the switch into a local variable:
   int reading = digitalRead(PIN_BUTTON);
-
 
   // check to see if you just pressed the button
   // (i.e. the input went from LOW to HIGH), and you've waited long enough
@@ -255,7 +240,7 @@ void CheckButton() {
         Serial.print("Button pressed. g_counter: ");
         Serial.println(g_counter);
 
-        // Update screen and MQTT        
+        // Update screen and MQTT
         UpdateCounter(g_counter);
       }
     }
@@ -267,6 +252,28 @@ void CheckButton() {
   lastButtonState = reading;
 }
 
+// Update the countdown timer on the screen.
+static long TIMER_COUNT_DOWN_24HOURS = 24 * 60 * 60 * 1000;  // 24 hours in milliseconds
+void UpdateCountDownTimer() {
+  // Find out how much time is left in the countdown timer
+  long timeLeftInSeconds = (TIMER_COUNT_DOWN_24HOURS - (millis() - g_lastButtonPress)) / 1000;  // in seconds
+
+  // Convert this time to hours, minutes and seconds
+  int hours = timeLeftInSeconds / 3600;
+  int minutes = (timeLeftInSeconds % 3600) / 60;
+  int seconds = timeLeftInSeconds % 60;
+  // Ensure that the values are always two digits long
+  char timeLeft[9];  // HH:MM:SS
+  sprintf(timeLeft, "%02d:%02d:%02d", hours, minutes, seconds);  
+
+  // Print the time left in the countdown timer to the Serial Monitor
+  Serial.print("Time left in countdown timer: ");
+  Serial.println(timeLeft);
+
+  // Copy the time left to the matrix buffer
+  sprintf(matrixBuffer, "%02d:%02d:%02d", hours, minutes, seconds);
+  ledMatrix.displayText(matrixBuffer, scrollAlign, scrollSpeed, scrollPause, PA_SCROLL_LEFT, PA_SCROLL_DOWN);
+}
 
 // the loop function runs over and over again forever
 void loop() {
@@ -276,14 +283,25 @@ void loop() {
   }
   client.loop();
 
+  // LED Maxtrix animation
+  while (ledMatrix.displayAnimate()) {  // animate the display
+    ledMatrix.displayReset();
+    UpdateCountDownTimer();
+  }
 
   // Button
   CheckButton();
 
-  // LED
   unsigned long currentMillis = millis();
 
-  // Status button
+  // // Update the count down timer once a second
+  // static long countdownTimer = 0;
+  // if (currentMillis >= countdownTimer + 1000) {
+  //   countdownTimer = currentMillis;
+  //   UpdateCountDownTimer();
+  // }
+
+  // Update the status LED
   static long builtInLEDTimer = 0;
   if (currentMillis >= builtInLEDTimer + 1000) {
     // save the last time you blinked the LED
