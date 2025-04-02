@@ -1,0 +1,12 @@
+{
+  "name": "counterproductive",
+  "version": "1",
+  "description": "", 
+  "scripts": {
+    "start": "npm run analyze",
+    "analyze": "node .\\analyze-log.js"
+  }, 
+  "dependencies": {
+    "axios": "^1.8.4"
+  }
+}
