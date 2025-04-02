@@ -9,7 +9,7 @@
  *
  */
 
-static const String VERSION = "Ver 3";  // Version
+static const char VERSION[] = "Ver 4";  // Version
 
 // Pins
 // ------------------------------------------------------
@@ -18,9 +18,15 @@ static const int PIN_MATRIX_CS = 23;  // D5
 
 // Global
 // ------------------------------------------------------
-static int g_counter = 0;
+static int g_counter = 0; // How many times the button has been pressed
 static long g_lastButtonPress = 0;  // Last time the button was pressed
 static boolean g_wait_for_mqtt_recv = true;
+static boolean g_gameState = true; // If the gamestate is ever false. Game over
+
+// Consts 
+// ------------------------------------------------------
+static long TIMER_COUNT_DOWN_24HOURS = 24 * 60 * 60 * 1000;  // 24 hours in milliseconds
+// static long TIMER_COUNT_DOWN_24HOURS = 60 * 1000;  // Testing death state.
 
 // Button Debounce
 // ------------------------------------------------------
@@ -42,16 +48,15 @@ unsigned long debounceDelay = 50;    // the debounce time; increase if the outpu
 #include <MD_MAX72xx.h>
 #include <SPI.h>
 
-uint8_t scrollSpeed = 50;                    // set initial scroll speed, can be a value between 10 (max) and 150 (min)
-textPosition_t scrollAlign = PA_LEFT;        // scroll align
-uint16_t scrollPause = 2000;                 // scroll pause in milliseconds
-static char matrixBuffer[128];  // 20 characters is enough for "00:00:00"
+uint8_t scrollSpeed = 50;              // set initial scroll speed, can be a value between 10 (max) and 150 (min)
+textPosition_t scrollAlign = PA_LEFT;  // scroll align
+uint16_t scrollPause = 2000;           // scroll pause in milliseconds
+static char matrixBuffer[128];         // 20 characters is enough for "00:00:00"
 
 // Define the number of devices we have in the chain and the hardware interface
 // NOTE: These pin numbers will probably not work with your hardware and may
 // need to be adapted
 #define HARDWARE_TYPE MD_MAX72XX::FC16_HW
-
 #define MAX_DEVICES 4
 
 // Hardware SPI connection
@@ -81,7 +86,8 @@ PubSubClient client(espClient);
 // const char* SETTING_WIFI_MQTT_USERNAME = "";
 // const char* SETTING_WIFI_MQTT_PASSWORD = "";
 // const char* SETTING_WIFI_MQTT_TOPIC_COUNT = "CounterProductive/count";
-// const char* SETTING_WIFI_MQTT_TOPIC_BIRTH = "CounterProductive/birth";
+// const char* SETTING_WIFI_MQTT_TOPIC_HEARTBEAT = "CounterProductive/heartbeat";
+
 
 void reconnect() {
   // Loop until we're reconnected
@@ -92,7 +98,7 @@ void reconnect() {
     if (client.connect("arduinoClient")) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish(SETTING_WIFI_MQTT_TOPIC_BIRTH, "I am alive");
+      SendHeartBeat();
       // ... and resubscribe
       client.subscribe(SETTING_WIFI_MQTT_TOPIC_COUNT);
     } else {
@@ -105,7 +111,10 @@ void reconnect() {
   }
 }
 
+// This function is called when the MQTT client receive s a new MQTT payload
 void callback(char *topic, byte *payload, unsigned int length) {
+  
+  // Print the message to the console.
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
@@ -114,7 +123,8 @@ void callback(char *topic, byte *payload, unsigned int length) {
   }
   Serial.println();
 
-  // look for the SETTING_WIFI_MQTT_TOPIC_COUNT topic
+  // Look for the SETTING_WIFI_MQTT_TOPIC_COUNT topic
+  // We should ONLY receive  this message
   if (String(topic) == SETTING_WIFI_MQTT_TOPIC_COUNT) {
     // Convert the payload to a string
     String message = String((char *)payload).substring(0, length);
@@ -123,25 +133,22 @@ void callback(char *topic, byte *payload, unsigned int length) {
     Serial.print("MQTT Recv g_counter: ");
     Serial.println(g_counter);
 
-    g_wait_for_mqtt_recv = false;  // We got the first recive.
+    g_wait_for_mqtt_recv = false;  // We got the first receive .
   }
 }
 
 // the setup function runs once when you press reset or power the board
 void setup() {
-  delay(500);
-  // When opening the Serial Monitor, select 9600 Baud
+
+  // It takes a bit of time for the system to start the serial port. 
+  delay(500);  
   Serial.begin(9600);
   delay(500);
+ 
+  pinMode(LED_BUILTIN, OUTPUT); // Initialize digital pin LED_BUILTIN as an output.
+  digitalWrite(LED_BUILTIN, ledState); // Set initial LED state
 
-  // initialize digital pin LED_BUILTIN as an output.
-  pinMode(LED_BUILTIN, OUTPUT);
-
-  // Button
-  pinMode(PIN_BUTTON, INPUT_PULLUP);
-
-  // set initial LED state
-  digitalWrite(LED_BUILTIN, ledState);
+  pinMode(PIN_BUTTON, INPUT_PULLUP); // Initialize Big Button as an input with a pullup
 
   // LED maxtrix
   ledMatrix.begin();          // initialize the object
@@ -151,12 +158,11 @@ void setup() {
 
   // Print version
   ledMatrix.print(VERSION);
-  delay(1000 * 3);
+  delay(1000 * 3); // Give the user some time to see the version.
 
   // WIFI
-  ledMatrix.print("W0");
-  // connecting to a WiFi network
-  WiFi.begin(SETTING_WIFI_SSID, SETTING_WIFI_PASSWORD);
+  ledMatrix.print("W0");  
+  WiFi.begin(SETTING_WIFI_SSID, SETTING_WIFI_PASSWORD); // connecting to a WiFi network
   static int wifiAttempts = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -165,31 +171,38 @@ void setup() {
     Serial.println(wifiAttempts);
   }
 
+  // We are connected. 
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  // connecting to a mqtt broker
+  // Connecting to a mqtt broker
   client.setServer(SETTING_WIFI_MQTT_SERVER_HOST, SETTING_WIFI_MQTT_SERVER_PORT);
   client.setCallback(callback);
 
   // Set to known value
-  ledMatrix.print("wait");
+  ledMatrix.print("Wait");
 
   // Set the last button press to now
   g_lastButtonPress = millis();  // Set the last button press to now
 }
 
+// The user has pushed the button. 
+// - Update the display
+// - Send a notification to MQTT 
 void UpdateCounter(int count) {
   if (g_wait_for_mqtt_recv) {
-    // We are waiting for the first recive before we can change the count
+    // We are waiting for the first receive  before we can change the count
     return;
   }
 
-  // Update the buffer with 
-  sprintf(matrixBuffer, "%d", count);
-  ledMatrix.displayText(matrixBuffer, PA_RIGHT, scrollSpeed, scrollPause, PA_SCROLL_UP, PA_SCROLL_UP);
+  // Clear the existing message
+  ledMatrix.displayReset();
+
+  // Update the buffer with
+  sprintf(matrixBuffer, "      Thank you for keeping me alive. # %d", count);
+  ledMatrix.displayText(matrixBuffer, PA_RIGHT, scrollSpeed, scrollPause, PA_SCROLL_LEFT, PA_MESH);
 
   // Send MQTT message
   Serial.println("");
@@ -202,9 +215,25 @@ void UpdateCounter(int count) {
   g_lastButtonPress = millis();  // Set the last button press to now
 }
 
+// Send a heartBeat to the MQTT server to tell them that we are still alive.
+void SendHeartBeat() {
+  // Find out how much time is left in the countdown timer
+  long timeLeftInSeconds = (TIMER_COUNT_DOWN_24HOURS - (millis() - g_lastButtonPress)) / 1000;  // in seconds
+
+  char timeLeft[32];  // HH:MM:SS
+
+  // Convert this time to hours, minutes and seconds
+  // Ensure that the values are always two digits long
+  sprintf(timeLeft, "%02d:%02d:%02d", (timeLeftInSeconds / 3600), ((timeLeftInSeconds % 3600) / 60), (timeLeftInSeconds % 60));
+
+  // Send the MQTT heartbeat with the remaining time
+  client.publish(SETTING_WIFI_MQTT_TOPIC_HEARTBEAT, timeLeft);
+}
+
+// Check to see if the button has been pressed.
 void CheckButton() {
   if (g_wait_for_mqtt_recv) {
-    // Don't bother until we get the first recive
+    // Don't bother until we get the first receive 
     return;
   }
   // read the state of the switch into a local variable:
@@ -232,7 +261,7 @@ void CheckButton() {
       if (buttonState == HIGH) {
         ledState = !ledState;
 
-        // Incrmenmt the counter
+        // Increment the counter
         g_counter++;
 
         // print the results to the Serial Monitor:
@@ -245,16 +274,13 @@ void CheckButton() {
       }
     }
   }
-  // set the LED:
-  // digitalWrite(LED_BUILTIN, ledState);
 
   // save the reading. Next time through the loop, it'll be the lastButtonState:
   lastButtonState = reading;
 }
 
 // Update the countdown timer on the screen.
-static long TIMER_COUNT_DOWN_24HOURS = 24 * 60 * 60 * 1000;  // 24 hours in milliseconds
-void UpdateCountDownTimer() {
+void DisplayCountDownTimer() {
   // Find out how much time is left in the countdown timer
   long timeLeftInSeconds = (TIMER_COUNT_DOWN_24HOURS - (millis() - g_lastButtonPress)) / 1000;  // in seconds
 
@@ -264,18 +290,25 @@ void UpdateCountDownTimer() {
   int seconds = timeLeftInSeconds % 60;
   // Ensure that the values are always two digits long
   char timeLeft[9];  // HH:MM:SS
-  sprintf(timeLeft, "%02d:%02d:%02d", hours, minutes, seconds);  
+  sprintf(timeLeft, "%02d:%02d:%02d", hours, minutes, seconds);
 
   // Print the time left in the countdown timer to the Serial Monitor
   Serial.print("Time left in countdown timer: ");
   Serial.println(timeLeft);
 
   // Copy the time left to the matrix buffer
-  sprintf(matrixBuffer, "%02d:%02d:%02d", hours, minutes, seconds);
+  sprintf(matrixBuffer, "Time Remaining: %02d:%02d:%02d", hours, minutes, seconds);
   ledMatrix.displayText(matrixBuffer, scrollAlign, scrollSpeed, scrollPause, PA_SCROLL_LEFT, PA_SCROLL_DOWN);
 }
 
-// the loop function runs over and over again forever
+void DisplayCallToAction() {
+  sprintf(matrixBuffer, "Keep me Alive - Press the Button");
+  ledMatrix.displayText(matrixBuffer, scrollAlign, scrollSpeed, scrollPause, PA_SCROLL_LEFT, PA_SCROLL_UP);
+}
+
+
+
+// The loop function runs over and over again forever
 void loop() {
 
   if (!client.connected()) {
@@ -283,10 +316,25 @@ void loop() {
   }
   client.loop();
 
-  // LED Maxtrix animation
+  // LED Matrix animation
   while (ledMatrix.displayAnimate()) {  // animate the display
     ledMatrix.displayReset();
-    UpdateCountDownTimer();
+
+    if( ! g_gameState) {
+      // Game over
+      sprintf(matrixBuffer, "GAME OVER. I have died");
+      ledMatrix.displayText(matrixBuffer, scrollAlign, scrollSpeed, scrollPause, PA_SCROLL_LEFT, PA_SCROLL_UP);
+      return ;
+    }
+
+    // Toggle between the count down timer and a call to action
+    static boolean idle_text = true;
+    idle_text = !idle_text;
+    if (idle_text) {
+      DisplayCountDownTimer();
+    } else {
+      DisplayCallToAction();
+    }
   }
 
   // Button
@@ -294,22 +342,32 @@ void loop() {
 
   unsigned long currentMillis = millis();
 
-  // // Update the count down timer once a second
-  // static long countdownTimer = 0;
-  // if (currentMillis >= countdownTimer + 1000) {
-  //   countdownTimer = currentMillis;
-  //   UpdateCountDownTimer();
-  // }
+  // Check for death
+  int timeLeftInSeconds = (TIMER_COUNT_DOWN_24HOURS - (currentMillis - g_lastButtonPress)) / 1000;  // in seconds
+  if(g_gameState && timeLeftInSeconds <= 0 ) {
+    g_gameState = false;  // DEAD Game over!
+  }
+
+  // Update the heartbeat
+  // Update the status LED
+  static long heartBeatTimer = 0;
+  const long INTERVAL_HEARTBEAT = 1000 * 60; // 60 Seconds
+  if (currentMillis >= heartBeatTimer + INTERVAL_HEARTBEAT) {
+    heartBeatTimer = currentMillis;
+
+    // Send a heartbeat signal to MQTT to show that its alive.
+    SendHeartBeat();
+  }
 
   // Update the status LED
   static long builtInLEDTimer = 0;
-  if (currentMillis >= builtInLEDTimer + 1000) {
-    // save the last time you blinked the LED
+  static long INTERVAL_STATUS_LED = 1000; // 1 second
+  if (currentMillis >= builtInLEDTimer + INTERVAL_STATUS_LED) {
     builtInLEDTimer = currentMillis;
+
+    // Toggle the LED
     ledState = !ledState;
     digitalWrite(LED_BUILTIN, ledState);
-
-    // print the results to the Serial Monitor:
-    Serial.print(".");
+    Serial.print(".");  // Debug. Print a dot to show activity.
   }
 }
