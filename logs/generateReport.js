@@ -71,7 +71,7 @@ for (let i = 1; i < entries.length; i++) {
 // Top 3 most active days
 const dateFreq = {};
 entries.forEach(e => dateFreq[e.date] = (dateFreq[e.date] || 0) + 1);
-const topDateCounts = Object.entries(dateFreq).sort((a, b) => b[1] - a[1]).slice(0, 3);
+const topDateCounts = Object.entries(dateFreq).sort((a, b) => b[1] - a[1]).slice(0, 1);
 
 // Median and average time between updates
 const gaps = entries.slice(1).map(e => e.timeDiff);
@@ -85,6 +85,22 @@ const formatGap = (s) => `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)
 const lastEntryTime = entries[entries.length - 1].timestamp.getTime();
 const now = Date.now();
 
+// Daily report: Longest gap and count of entries per day
+const dailyReport = Object.entries(longestGapByDate).map(([date, { gap, start, end }]) => {
+  const hours = Math.floor(gap / 3600);
+  const minutes = Math.floor((gap % 3600) / 60);
+  const entryCount = entries.filter(e => e.date === date).length;
+
+  let output = '';
+  output += `<div class="stat">📅 <strong>${date}:</strong></div>`;
+  output += `<ul style='margin: 0 0 0 3em; padding: 0;'>`;
+  output += `<li>${entryCount} button presses</li>`;
+  output += `<li>Longest gap: <strong>${hours}h ${minutes}m</strong> From <code>${start.toLocaleString()} → ${end.toLocaleString()}</code></li>`;
+  output += `</ul>`;
+  output += `</div>`;
+  return output;
+
+}).join('\n');
 
 // HTML report
 const html = `
@@ -98,33 +114,18 @@ const html = `
 <h1>📊 CounterProductive Log Report</h1>
 <p>Generated on: <strong>${new Date().toLocaleString()}</strong></p>
 
-<div class="stat">🔘 The button has been pressed <strong>${lastCount}</strong> times, last pressed <span id='timeSinceLastSpan'><i>calulating...</i></span> ago</div>
-<div class="stat">😟 Time remaining to keep this project alive: <span id='timeRemainingSpan'><i>calulating...</i></span></div>
+<div class="stat">🔘 The button has been pressed <strong>${lastCount}</strong> times, last pressed <span id='timeSinceLastSpan'><i>calculating...</i></span> ago</div>
+<div class="stat">😟 Time remaining to keep this project alive: <span id='timeRemainingSpan'><i>calculating...</i></span></div>
 <div class="stat">&nbsp;</div>
-<div class="stat">🗓️ Last update: <strong><span id='LastUpdated'>${entries[entries.length - 1].timestamp.toLocaleString()}</span></strong></div>
+<div class="stat">🗓️ Last button press: <strong><span id='LastUpdated'>${entries[entries.length - 1].timestamp.toLocaleString()}</span></strong></div>
 <div class="stat">📈 Average entries per day: <strong>${averagePerDay}</strong> (${entries.length} entries over ${totalDays} days)</div>
 <div class="stat">⏰ Most frequent hour: <strong>${mostFreqHour}:00</strong> (${freqCount} entries)</div>
-<div class="stat">🕒 Longest gap between updates: <strong>${gapHours}h ${gapMinutes}m</strong> From ${gapStart.toLocaleString()} → ${gapEnd.toLocaleString()}</div>
-<div class="stat">📆 Longest gap per day (same-date only):<ul>${Object.entries(longestGapByDate).map(([date, { gap, start, end }]) => {
-  const hours = Math.floor(gap / 3600);
-  const minutes = Math.floor((gap % 3600) / 60);
-
-  // format the hours and minutes to be prefixed with '0' if less than 10
-  const formattedHours = String(hours).padStart(2, '0');
-  const formattedMinutes = String(minutes).padStart(2, '');
-
-  return `<li><code>${date}: ${formattedHours}h ${formattedMinutes}m. From ${start.toLocaleString()} → ${end.toLocaleString()}</code></li>`;
-}).join('\n')}</ul></div>
-
-
-<div class="stat">📅 Top 3 most active days:
-  <ul>
-    ${topDateCounts.map(([d, c]) => `<li>${d}: ${c} entries</li>`).join('\n')}
-  </ul>
+<div class="stat">🕒 Longest gap between updates: <strong>${gapHours}h ${gapMinutes}m</strong> From <code>${gapStart.toLocaleString()} → ${gapEnd.toLocaleString()}</code></div>
+<div class="stat">📅 Most active day:
+    ${topDateCounts.map(([d, c]) => `<strong>${d}</strong> with <strong>${c}</strong> button presses`).join('\n')}  
 </div>
 
-<!-- <div class="stat">📏 Median time between entries: <strong>${formatGap(medianGap)}</strong></div> -->
-<!-- <div class="stat">🕓 Average time between updates: <strong>${formatGap(avgGap)}</strong></div> -->
+${dailyReport}
 `;
 
 fs.writeFileSync(OUTPUT_FILE, html, 'utf8');

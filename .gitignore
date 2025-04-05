@@ -1,7 +1,5 @@
 node_modules
 firmware/counterproductive/settings.h
+logs/settings.json
 logs/output.txt
-logs/notes.md
-logs/mqtt-gist-update.ps1
-logs/logger.bat
-
+logs/report.html
