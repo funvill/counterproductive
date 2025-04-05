@@ -85,22 +85,25 @@ const formatGap = (s) => `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)
 const lastEntryTime = entries[entries.length - 1].timestamp.getTime();
 const now = Date.now();
 
-// Daily report: Longest gap and count of entries per day
-const dailyReport = Object.entries(longestGapByDate).map(([date, { gap, start, end }]) => {
-  const hours = Math.floor(gap / 3600);
-  const minutes = Math.floor((gap % 3600) / 60);
-  const entryCount = entries.filter(e => e.date === date).length;
+// Calculate stats for the most popular day of the week
+const dayOfWeekCounts = Array(7).fill(0); // Array to store counts for each day (0 = Sunday, 6 = Saturday)
+entries.forEach(e => {
+  const dayOfWeek = e.timestamp.getDay(); // Get day of the week (0 = Sunday, 6 = Saturday)
+  dayOfWeekCounts[dayOfWeek]++;
+});
+const mostPopularDayIndex = dayOfWeekCounts.indexOf(Math.max(...dayOfWeekCounts));
+const mostPopularDayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][mostPopularDayIndex];
+const mostPopularDayCount = dayOfWeekCounts[mostPopularDayIndex];
+const mostPopularDayPercentage = ((mostPopularDayCount / entries.length) * 100).toFixed(2);
 
-  let output = '';
-  output += `<div class="stat">📅 <strong>${date}:</strong></div>`;
-  output += `<ul style='margin: 0 0 0 3em; padding: 0;'>`;
-  output += `<li>${entryCount} button presses</li>`;
-  output += `<li>Longest gap: <strong>${hours}h ${minutes}m</strong> From <code>${start.toLocaleString()} → ${end.toLocaleString()}</code></li>`;
-  output += `</ul>`;
-  output += `</div>`;
-  return output;
+// Compare activity levels on weekdays versus weekends
+const weekdayCount = dayOfWeekCounts.slice(1, 6).reduce((sum, count) => sum + count, 0); // Monday to Friday
+const weekendCount = dayOfWeekCounts[0] + dayOfWeekCounts[6]; // Sunday + Saturday
 
-}).join('\n');
+// Compare activity levels on weekdays versus weekends
+const totalPresses = weekdayCount + weekendCount;
+const weekdayPercentage = ((weekdayCount / totalPresses) * 100).toFixed(2);
+const weekendPercentage = ((weekendCount / totalPresses) * 100).toFixed(2);
 
 // HTML report
 const html = `
@@ -110,6 +113,9 @@ const html = `
     .stat { margin-bottom: 1em; }
     code { background: #eee; padding: 2px 4px; border-radius: 4px; }
     div.stat { margin: 0; padding: 0; }
+    .gap-visualization { display: flex; flex-wrap: nowrap; overflow-x: auto; margin-top: 20px; }
+    .gap-box { display: inline-block; margin-right: 2px; text-align: center; font-size: 10px; color: #fff; background-color: #007bff; border-radius: 4px; overflow: hidden; }
+    .gap-box span { display: block; padding: 2px; }    
   </style>
 <h1>📊 CounterProductive Log Report</h1>
 <p>Generated on: <strong>${new Date().toLocaleString()}</strong></p>
@@ -118,14 +124,119 @@ const html = `
 <div class="stat">😟 Time remaining to keep this project alive: <span id='timeRemainingSpan'><i>calculating...</i></span></div>
 <div class="stat">&nbsp;</div>
 <div class="stat">🗓️ Last button press: <strong><span id='LastUpdated'>${entries[entries.length - 1].timestamp.toLocaleString()}</span></strong></div>
-<div class="stat">📈 Average entries per day: <strong>${averagePerDay}</strong> (${entries.length} entries over ${totalDays} days)</div>
-<div class="stat">⏰ Most frequent hour: <strong>${mostFreqHour}:00</strong> (${freqCount} entries)</div>
-<div class="stat">🕒 Longest gap between updates: <strong>${gapHours}h ${gapMinutes}m</strong> From <code>${gapStart.toLocaleString()} → ${gapEnd.toLocaleString()}</code></div>
+<div class="stat">📈 Average button presses per day: <strong>${averagePerDay}</strong> (${entries.length} entries over ${totalDays} days)</div>
+<div class="stat">🕒 Longest between button presses: <strong>${gapHours}h ${gapMinutes}m</strong> between <code>${gapStart.toLocaleString()} → ${gapEnd.toLocaleString()}</code></div>
 <div class="stat">📅 Most active day:
     ${topDateCounts.map(([d, c]) => `<strong>${d}</strong> with <strong>${c}</strong> button presses`).join('\n')}  
 </div>
+<div class="stat">⏰ Most popular hour of the day: <strong>${mostFreqHour}:00</strong> (${freqCount} button presses)</div>
+<div class="stat">📅 Most popular day of the week: <strong>${mostPopularDayName}</strong> with <strong>${mostPopularDayCount}</strong> (<strong>${mostPopularDayPercentage}%</strong>) button presses </div>
+<div class="stat">📊 Weekday vs Weekend Activity: 
+    <strong>${weekdayCount}</strong> (${weekdayPercentage}%) presses on weekdays vs 
+    <strong>${weekendCount}</strong> (${weekendPercentage}%) presses on weekends 
+</div>
 
-${dailyReport}
+<h2>📅 Day Visualization</h2>
+<div class="gap-visualization">
+  <!-- Add hour labels as the top row -->
+  <div class="day-row">
+    <div class="day-label">Hour</div> <!-- Empty cell for alignment -->
+    <div class="day-boxes">
+      ${Array.from({ length: 24 }).map((_, hour) => `
+        <div class="hour-box header" title="Hour ${hour}:00">${hour}</div>
+      `).join('')}
+    </div>
+    <div class="day-total header">Total</div> <!-- Header for the total column -->
+  </div>
+
+  ${[...uniqueDates].map(date => {
+    const dailyEntries = entries.filter(e => e.date === date);
+    const totalEntries = dailyEntries.length; // Calculate total entries for the day
+
+    return `
+      <div class="day-row">
+        <div class="day-label">${date}</div>
+        <div class="day-boxes">
+          ${Array.from({ length: 24 }).map((_, hour) => {
+            const hourEntries = dailyEntries.filter(e => e.hour === hour);
+            const isPressed = hourEntries.length > 0;
+            const tooltip = isPressed
+              ? hourEntries.map(e => `${e.timestamp.toLocaleTimeString()} (#${e.count})`).join(', ')
+              : `No presses during ${hour}:00 - ${hour + 1}:00`;
+
+            return `
+              <div class="hour-box ${isPressed ? 'pressed' : 'gap'}" title="${tooltip}">
+                ${isPressed ? hourEntries.length : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+        <div class="day-total">${totalEntries}</div> <!-- Total entries for the day -->
+      </div>
+    `;
+  }).join('')}
+</div>
+
+<style>
+  .gap-visualization {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .day-row {
+    display: flex;
+    align-items: center;
+  }
+  .day-label {
+    width: 100px;
+    font-weight: bold;
+    text-align: right;
+    padding-right: 5px;
+  }
+  .day-boxes {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 2px;
+    flex-grow: 1;
+  }
+  .day-total {
+    width: 100px;
+    font-weight: bold;
+    text-align: right;
+    padding-left: 5px;
+  }
+  .hour-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 20px;
+    font-size: 10px;
+    color: #fff;
+    margin: 0; /* Ensure no extra margin */
+    padding: 0; /* Ensure no extra padding */
+    box-sizing: border-box; /* Include border in width/height */
+  }
+  .hour-box.gap {
+    background-color: #007bff;
+  }
+  .hour-box.pressed {
+    background-color: #28a745;
+  }
+  .hour-box.header {
+    background-color: #ffffff;
+    color: #000;
+    font-weight: bold;
+    border: 1px solid #ccc;
+    width: 20px; /* Match the width of regular boxes */
+    height: 20px; /* Match the height of regular boxes */
+    line-height: 20px; /* Match the vertical alignment */
+    text-align: center;
+    margin: 0; /* Ensure no extra margin */
+    padding: 0; /* Ensure no extra padding */
+    box-sizing: border-box; /* Include border in width/height */
+  }
+</style>
 `;
 
 fs.writeFileSync(OUTPUT_FILE, html, 'utf8');
