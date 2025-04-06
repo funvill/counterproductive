@@ -10,6 +10,17 @@ const path = require('path');
 const LOG_FILE = path.join(__dirname, 'output.txt');
 const OUTPUT_FILE = path.join(__dirname, 'report.html');
 
+// Helper function to format dates as MMM-DD
+const formatDateMMMDD = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+};
+
+const formatDateTime = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', { month: 'short', day: '2-digit',  hour: '2-digit', minute: '2-digit', second: '2-digit' });
+};
+
 // Read and parse the log
 const lines = fs.readFileSync(LOG_FILE, 'utf8').split('\n').filter(line => line.startsWith('2025-'));
 
@@ -174,20 +185,20 @@ const html = `
 <div class="stats">
 <div class="stat">🔘 The button has been pressed <strong>${lastCount}</strong> times, last pressed <span id='timeSinceLastSpan'><i>calculating...</i></span> ago</div>
 <div class="stat">😟 Time remaining to keep this project alive: <span id='timeRemainingSpan'><i>calculating...</i></span></div>
+<div class="stat">🗓️ Last button press: <strong><span id='LastUpdated'>${formatDateTime(entries[entries.length - 1].timestamp)}</span></strong></div>
 <div class="stat">&nbsp;</div>
-<div class="stat">🗓️ Last button press: <strong><span id='LastUpdated'>${entries[entries.length - 1].timestamp.toLocaleString()}</span></strong></div>
 <div class="stat">📈 Average button presses per day: <strong>${averagePerDay}</strong> (${entries.length} entries over ${totalDays} days)</div>
-<div class="stat">🕒 Longest between button presses: <strong>${gapHours}h ${gapMinutes}m</strong> between <code>${gapStart.toLocaleString()} → ${gapEnd.toLocaleString()}</code></div>
+<div class="stat">🕒 Longest between button presses: <strong>${gapHours}h ${gapMinutes}m</strong> between <code>${formatDateTime(gapStart)} → ${formatDateTime(gapEnd)}</code></div>
 <div class="stat">⏳ Average length between button presses: <strong>${formattedAvgGap}</strong></div>
 <div class="stat">⏳ <span title="The median is the middle value in a sorted list of numbers. It represents the point where half the values are smaller and half are larger.">Median</span> length between button presses: 
-    <strong>${Math.floor(medianGap / 3600)}h ${Math.floor((medianGap % 3600) / 60)}m ${Math.floor(medianGap % 60)}s</strong> (<i>Heavly influenced by rappid button presses</i>)
+    <strong>${Math.floor(medianGap / 3600)}h ${Math.floor((medianGap % 3600) / 60)}m ${Math.floor(medianGap % 60)}s</strong> (<i>Heavily influenced by rapid button presses</i>)
 </div>
 <div class="stat">📅 Most active day:
-    ${topDateCounts.map(([d, c]) => `<strong>${d}</strong> with <strong>${c}</strong> button presses`).join('\n')}  
+    ${topDateCounts.map(([d, c]) => `<strong>${formatDateMMMDD(d)}</strong> with <strong>${c}</strong> button presses`).join('\n')}  
 </div>
-<div class="stat">📊 The most presses in a single hour of a day: <strong>${maxPressesInHour}</strong> presses in the <strong>${maxPressesHour}:00</strong> on <strong>${maxPressesDate}</strong></div>
+<div class="stat">📊 The most presses in a single hour of a day: <strong>${maxPressesInHour}</strong> presses in the <strong>${maxPressesHour}:00</strong> on <strong>${formatDateMMMDD(maxPressesDate)}</strong></div>
 <div class="stat">📊 Rapid button presses (gap < 30 seconds): <strong>${rapidPressCount}</strong></div>
-<div class="stat">📊 Rapid button presses in a single session: <strong>${longestRapidSession}</strong> on <strong>${longestRapidSessionDate}</strong></div>
+<div class="stat">📊 Rapid button presses in a single session: <strong>${longestRapidSession}</strong> on <strong>${formatDateMMMDD(longestRapidSessionDate)}</strong></div>
 <div class="stat">⏰ Most popular hour of the day: <strong>${mostFreqHour}:00</strong> (${freqCount} button presses)</div>
 <div class="stat">📅 Most popular day of the week: <strong>${mostPopularDayName}</strong> with <strong>${mostPopularDayCount}</strong> (<strong>${mostPopularDayPercentage}%</strong>) button presses </div>
 <div class="stat">📊 Weekday vs Weekend Activity: 
@@ -199,7 +210,7 @@ const html = `
 <div class="gap-visualization">
   <!-- Add hour labels as the top row -->
   <div class="day-row">
-    <div class="day-label">Hour</div> <!-- Empty cell for alignment -->
+    <div class="day-label">Hour</div>
     <div class="day-boxes">
       ${Array.from({ length: 24 }).map((_, hour) => `
         <div class="hour-box header" title="Hour ${hour}:00">${hour}</div>
@@ -211,34 +222,36 @@ const html = `
   ${[...uniqueDates]
     .sort((a, b) => new Date(b) - new Date(a)) // Sort dates in descending order
     .map(date => {
-    const dailyEntries = entries.filter(e => e.date === date);
-    const totalEntries = dailyEntries.length; // Calculate total entries for the day
+      const dailyEntries = entries.filter(e => e.date === date);
+      const totalEntries = dailyEntries.length; // Calculate total entries for the day
+      const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'short' }); // Get three-letter day of the week
+      const isWeekend = dayOfWeek === 'Sat' || dayOfWeek === 'Sun'; // Check if the day is a weekend
 
-    return `
-      <div class="day-row">
-        <div class="day-label">${date}</div>
-        <div class="day-boxes">
-          ${Array.from({ length: 24 }).map((_, hour) => {
-            const hourEntries = dailyEntries.filter(e => e.hour === hour);
-            const isPressed = hourEntries.length > 0;
-            const tooltip = isPressed
-              ? hourEntries.map(e => `${e.timestamp.toLocaleTimeString()} (#${e.count})`).join(', ')
-              : `No presses during ${hour}:00 - ${hour + 1}:00`;
+      return `
+        <div class="day-row ${isWeekend ? 'weekend' : ''}">
+          <div class="day-label">${formatDateMMMDD(date)} (${dayOfWeek})</div>
+          <div class="day-boxes">
+            ${Array.from({ length: 24 }).map((_, hour) => {
+              const hourEntries = dailyEntries.filter(e => e.hour === hour);
+              const isPressed = hourEntries.length > 0;
+              const tooltip = isPressed
+                ? hourEntries.map(e => `${e.timestamp.toLocaleTimeString()} (#${e.count})`).join(', ')
+                : `No presses during ${hour}:00 - ${hour + 1}:00`;
 
-            return `
-              <div class="hour-box ${isPressed ? 'pressed' : 'gap'}" title="${tooltip}">
-                ${isPressed ? hourEntries.length : ''}
-              </div>
-            `;
-          }).join('')}
+              return `
+                <div class="hour-box ${isPressed ? 'pressed' : 'gap'}" title="${tooltip}">
+                  ${isPressed ? hourEntries.length : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <div class="day-total">${totalEntries}</div> <!-- Total entries for the day -->
         </div>
-        <div class="day-total">${totalEntries}</div> <!-- Total entries for the day -->
-      </div>
-    `;
-  }).join('')}
+      `;
+    }).join('')}
 </div>
 
-<p>Generated on: <strong>${new Date().toLocaleString()}</strong></p>
+<p>Generated on: <strong>${formatDateTime(new Date())}</strong></p>
 </div> <!-- End of stats div -->
 
 <style>
@@ -251,11 +264,15 @@ const html = `
     display: flex;
     align-items: center;
   }
+  .day-row.weekend {
+    background-color: #f0f0f0; /* Light gray background for weekends */
+  }
   .day-label {
-    width: 100px;
+    width: 150px; /* Increased width to accommodate day of the week */
     font-weight: bold;
     text-align: right;
     padding-right: 5px;
+    font-family: monospace;
   }
   .day-boxes {
     display: flex;
