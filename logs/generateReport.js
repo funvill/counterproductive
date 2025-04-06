@@ -10,31 +10,47 @@ const path = require('path');
 const LOG_FILE = path.join(__dirname, 'output.txt');
 const OUTPUT_FILE = path.join(__dirname, 'report.html');
 
-// Helper function to format dates as MMM-DD
+// Helper function to format dates as MMM-DD in UTC
 const formatDateMMMDD = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+  return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', timeZone: 'america/vancouver' });
 };
 
+// Helper function to format date and time in UTC
 const formatDateTime = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleString('en-US', { month: 'short', day: '2-digit',  hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return date.toLocaleString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'america/vancouver' });
 };
 
 // Read and parse the log
 const lines = fs.readFileSync(LOG_FILE, 'utf8').split('\n').filter(line => line.startsWith('2025-'));
 
+// Parse log entries
+// Assuming the log format is: "2025-04-02T12:34:56-07:00 CounterProductive/count count"
+// Examples: 
+// 2025-04-05T19:29:56-07:00 CounterProductive/count 290
+// 2025-04-05T19:34:05-07:00 CounterProductive/count 291
+// 2025-04-05T22:16:59-07:00 CounterProductive/count 292
+// 2025-04-06T10:43:53-07:00 CounterProductive/count 293
+// 2025-04-06T12:41:09-07:00 CounterProductive/count 294
+// 2025-04-06T12:41:10-07:00 CounterProductive/count 295
+// 2025-04-06T15:29:32-07:00 CounterProductive/count 296
 const entries = lines.map(line => {
   const [timestamp, topic, countStr] = line.trim().split(/\s+/);
+  const dateObj = new Date(timestamp); // Parse the timestamp, including the time zone offset
   return {
-    timestamp: new Date(timestamp),
-    hour: new Date(timestamp).getHours(),
-    date: timestamp.split('T')[0],
+    rawTimestamp: timestamp,
+    timestamp: dateObj,
+    hour: dateObj.getHours(), // Use local hours
+    date: dateObj.toLocaleDateString().split('T')[0], // Extract the date in UTC
+    time: dateObj.toTimeString().split(' ')[0], // Extract the time in UTC
     count: parseInt(countStr, 10)
   };
 });
 
 entries.sort((a, b) => a.timestamp - b.timestamp);
+
+// console.log(JSON.stringify(entries, null, 2)); // Debugging output
 
 // Calculate gaps between entries
 for (let i = 1; i < entries.length; i++) {
@@ -43,9 +59,13 @@ for (let i = 1; i < entries.length; i++) {
 
 // Calculations
 const uniqueDates = new Set(entries.map(e => e.date));
+
 const totalDays = uniqueDates.size;
 const averagePerDay = (entries.length / totalDays).toFixed(2);
 const lastCount = entries[entries.length - 1].count;
+
+console.log('uniqueDates '+ uniqueDates.length );
+console.log(JSON.stringify(uniqueDates, null, 2)); // Debugging output
 
 // Most frequent hour
 const hourFreq = {};
@@ -222,14 +242,23 @@ const html = `
   ${[...uniqueDates]
     .sort((a, b) => new Date(b) - new Date(a)) // Sort dates in descending order
     .map(date => {
+
+      // There is a bug here where the date is always one day behind
+      // This is because the date is being set to midnight UTC, which is 7 hours behind
+      // the local time in Vancouver (PST/PDT)
+      // Push the date ahead one day to get the next date
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+      
+
       const dailyEntries = entries.filter(e => e.date === date);
       const totalEntries = dailyEntries.length; // Calculate total entries for the day
-      const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'short' }); // Get three-letter day of the week
+      const dayOfWeek = new Date(nextDate).toLocaleDateString('en-US', { weekday: 'short' }); // Get three-letter day of the week
       const isWeekend = dayOfWeek === 'Sat' || dayOfWeek === 'Sun'; // Check if the day is a weekend
 
       return `
         <div class="day-row ${isWeekend ? 'weekend' : ''}">
-          <div class="day-label">${formatDateMMMDD(date)} (${dayOfWeek})</div>
+          <div class="day-label">${formatDateMMMDD(nextDate)} (${dayOfWeek})</div>
           <div class="day-boxes">
             ${Array.from({ length: 24 }).map((_, hour) => {
               const hourEntries = dailyEntries.filter(e => e.hour === hour);
