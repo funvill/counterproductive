@@ -105,6 +105,58 @@ const totalPresses = weekdayCount + weekendCount;
 const weekdayPercentage = ((weekdayCount / totalPresses) * 100).toFixed(2);
 const weekendPercentage = ((weekendCount / totalPresses) * 100).toFixed(2);
 
+// Calculate the average length between button presses
+const formattedAvgGap = `${Math.floor(avgGap / 3600)}h ${Math.floor((avgGap % 3600) / 60)}m ${Math.floor(avgGap % 60)}s`; // Format as h:m:s
+
+// Calculate the most presses in a single hour of a day
+let maxPressesInHour = 0;
+let maxPressesHour = null;
+let maxPressesDate = null;
+
+const hourDayFreq = {}; // Track presses for each hour of each day
+
+entries.forEach(e => {
+  const key = `${e.date}-${e.hour}`;
+
+  // Set initial count if not already set
+  if (!hourDayFreq[key]) hourDayFreq[key] = 0; 
+
+  // Increment the number of times that hour had a press
+  // This is a simple way to track the number of presses in each hour of each day
+  hourDayFreq[key] ++;
+
+  if (hourDayFreq[key] > maxPressesInHour) {
+    maxPressesInHour = hourDayFreq[key];
+    maxPressesHour = e.hour;
+    maxPressesDate = e.date;
+  }
+});
+
+// Calculate rapid button presses (gap < 30 seconds)
+let rapidPressCount = 0;
+for (let i = 1; i < entries.length; i++) {
+  if (entries[i].timeDiff < 30) {
+    rapidPressCount++;
+  }
+}
+
+// Calculate the longest session of rapid button presses (gaps < 30 seconds)
+let longestRapidSession = 0;
+let longestRapidSessionDate = null;
+let currentRapidSession = 0;
+
+for (let i = 1; i < entries.length; i++) {
+  if (entries[i].timeDiff < 30) {
+    currentRapidSession++;
+    if (currentRapidSession > longestRapidSession) {
+      longestRapidSession = currentRapidSession;
+      longestRapidSessionDate = entries[i].date;
+    }
+  } else {
+    currentRapidSession = 0; // Reset the session if the gap is > 30 seconds
+  }
+}
+
 // HTML report
 const html = `
   <style>
@@ -118,17 +170,24 @@ const html = `
     .gap-box span { display: block; padding: 2px; }    
   </style>
 <h1>📊 CounterProductive Log Report</h1>
-<p>Generated on: <strong>${new Date().toLocaleString()}</strong></p>
 
+<div class="stats">
 <div class="stat">🔘 The button has been pressed <strong>${lastCount}</strong> times, last pressed <span id='timeSinceLastSpan'><i>calculating...</i></span> ago</div>
 <div class="stat">😟 Time remaining to keep this project alive: <span id='timeRemainingSpan'><i>calculating...</i></span></div>
 <div class="stat">&nbsp;</div>
 <div class="stat">🗓️ Last button press: <strong><span id='LastUpdated'>${entries[entries.length - 1].timestamp.toLocaleString()}</span></strong></div>
 <div class="stat">📈 Average button presses per day: <strong>${averagePerDay}</strong> (${entries.length} entries over ${totalDays} days)</div>
 <div class="stat">🕒 Longest between button presses: <strong>${gapHours}h ${gapMinutes}m</strong> between <code>${gapStart.toLocaleString()} → ${gapEnd.toLocaleString()}</code></div>
+<div class="stat">⏳ Average length between button presses: <strong>${formattedAvgGap}</strong></div>
+<div class="stat">⏳ <span title="The median is the middle value in a sorted list of numbers. It represents the point where half the values are smaller and half are larger.">Median</span> length between button presses: 
+    <strong>${Math.floor(medianGap / 3600)}h ${Math.floor((medianGap % 3600) / 60)}m ${Math.floor(medianGap % 60)}s</strong> (<i>Heavly influenced by rappid button presses</i>)
+</div>
 <div class="stat">📅 Most active day:
     ${topDateCounts.map(([d, c]) => `<strong>${d}</strong> with <strong>${c}</strong> button presses`).join('\n')}  
 </div>
+<div class="stat">📊 The most presses in a single hour of a day: <strong>${maxPressesInHour}</strong> presses in the <strong>${maxPressesHour}:00</strong> on <strong>${maxPressesDate}</strong></div>
+<div class="stat">📊 Rapid button presses (gap < 30 seconds): <strong>${rapidPressCount}</strong></div>
+<div class="stat">📊 Rapid button presses in a single session: <strong>${longestRapidSession}</strong> on <strong>${longestRapidSessionDate}</strong></div>
 <div class="stat">⏰ Most popular hour of the day: <strong>${mostFreqHour}:00</strong> (${freqCount} button presses)</div>
 <div class="stat">📅 Most popular day of the week: <strong>${mostPopularDayName}</strong> with <strong>${mostPopularDayCount}</strong> (<strong>${mostPopularDayPercentage}%</strong>) button presses </div>
 <div class="stat">📊 Weekday vs Weekend Activity: 
@@ -149,7 +208,9 @@ const html = `
     <div class="day-total header">Total</div> <!-- Header for the total column -->
   </div>
 
-  ${[...uniqueDates].map(date => {
+  ${[...uniqueDates]
+    .sort((a, b) => new Date(b) - new Date(a)) // Sort dates in descending order
+    .map(date => {
     const dailyEntries = entries.filter(e => e.date === date);
     const totalEntries = dailyEntries.length; // Calculate total entries for the day
 
@@ -176,6 +237,9 @@ const html = `
     `;
   }).join('')}
 </div>
+
+<p>Generated on: <strong>${new Date().toLocaleString()}</strong></p>
+</div> <!-- End of stats div -->
 
 <style>
   .gap-visualization {
