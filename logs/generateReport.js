@@ -64,9 +64,6 @@ const totalDays = uniqueDates.size;
 const averagePerDay = (entries.length / totalDays).toFixed(2);
 const lastCount = entries[entries.length - 1].count;
 
-console.log('uniqueDates '+ uniqueDates.length );
-console.log(JSON.stringify(uniqueDates, null, 2)); // Debugging output
-
 // Most frequent hour
 const hourFreq = {};
 entries.forEach(e => hourFreq[e.hour] = (hourFreq[e.hour] || 0) + 1);
@@ -150,11 +147,11 @@ entries.forEach(e => {
   const key = `${e.date}-${e.hour}`;
 
   // Set initial count if not already set
-  if (!hourDayFreq[key]) hourDayFreq[key] = 0; 
+  if (!hourDayFreq[key]) hourDayFreq[key] = 0;
 
   // Increment the number of times that hour had a press
   // This is a simple way to track the number of presses in each hour of each day
-  hourDayFreq[key] ++;
+  hourDayFreq[key]++;
 
   if (hourDayFreq[key] > maxPressesInHour) {
     maxPressesInHour = hourDayFreq[key];
@@ -202,10 +199,11 @@ const html = `
   </style>
 <h1>📊 CounterProductive Log Report</h1>
 
+
 <div class="stats">
 <div class="stat">🔘 The button has been pressed <strong>${lastCount}</strong> times, last pressed <span id='timeSinceLastSpan'><i>calculating...</i></span> ago</div>
 <div class="stat">😟 Time remaining to keep this project alive: <span id='timeRemainingSpan'><i>calculating...</i></span></div>
-<div class="stat">🗓️ Last button press: <strong><span id='LastUpdated'>${formatDateTime(entries[entries.length - 1].timestamp)}</span></strong></div>
+<div class="stat">🗓️ Last button press: <strong>${formatDateTime(entries[entries.length - 1].timestamp)}</strong></div>
 <div class="stat">&nbsp;</div>
 <div class="stat">📈 Average button presses per day: <strong>${averagePerDay}</strong> (${entries.length} entries over ${totalDays} days)</div>
 <div class="stat">🕒 Longest between button presses: <strong>${gapHours}h ${gapMinutes}m</strong> between <code>${formatDateTime(gapStart)} → ${formatDateTime(gapEnd)}</code></div>
@@ -249,7 +247,7 @@ const html = `
       // Push the date ahead one day to get the next date
       const nextDate = new Date(date);
       nextDate.setDate(nextDate.getDate() + 1);
-      
+
 
       const dailyEntries = entries.filter(e => e.date === date);
       const totalEntries = dailyEntries.length; // Calculate total entries for the day
@@ -261,18 +259,18 @@ const html = `
           <div class="day-label">${formatDateMMMDD(nextDate)} (${dayOfWeek})</div>
           <div class="day-boxes">
             ${Array.from({ length: 24 }).map((_, hour) => {
-              const hourEntries = dailyEntries.filter(e => e.hour === hour);
-              const isPressed = hourEntries.length > 0;
-              const tooltip = isPressed
-                ? hourEntries.map(e => `${e.timestamp.toLocaleTimeString()} (#${e.count})`).join(', ')
-                : `No presses during ${hour}:00 - ${hour + 1}:00`;
+        const hourEntries = dailyEntries.filter(e => e.hour === hour);
+        const isPressed = hourEntries.length > 0;
+        const tooltip = isPressed
+          ? hourEntries.map(e => `${e.timestamp.toLocaleTimeString()} (#${e.count})`).join(', ')
+          : `No presses during ${hour}:00 - ${hour + 1}:00`;
 
-              return `
+        return `
                 <div class="hour-box ${isPressed ? 'pressed' : 'gap'}" title="${tooltip}">
                   ${isPressed ? hourEntries.length : ''}
                 </div>
               `;
-            }).join('')}
+      }).join('')}
           </div>
           <div class="day-total">${totalEntries}</div> <!-- Total entries for the day -->
         </div>
@@ -346,7 +344,11 @@ const html = `
     padding: 0; /* Ensure no extra padding */
     box-sizing: border-box; /* Include border in width/height */
   }
+  #LastUpdated {
+    display: none;
+  }
 </style>
+<span id='LastUpdated'>${entries[entries.length - 1].timestamp.toLocaleString()}</span>
 `;
 
 fs.writeFileSync(OUTPUT_FILE, html, 'utf8');
