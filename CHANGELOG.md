@@ -1,5 +1,10 @@
 # CHANGE LOG
 
+## Version 5 (2025-April-08)
+
+- Only do a heatbeat once every 15 mins instead once a mins. Improve battery life.
+- When the button is pressed, it instantly changes to the button count.
+
 ## Version 4 (2025-April-01)
 
 - Added a hearbeat to send the remaining time to the MQTT server once a min

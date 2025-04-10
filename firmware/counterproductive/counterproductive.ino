@@ -201,8 +201,8 @@ void UpdateCounter(int count) {
   ledMatrix.displayReset();
 
   // Update the buffer with
-  sprintf(matrixBuffer, "      Thank you for keeping me alive. # %d", count);
-  ledMatrix.displayText(matrixBuffer, PA_RIGHT, scrollSpeed, scrollPause, PA_SCROLL_LEFT, PA_MESH);
+  sprintf(matrixBuffer, "# %d      Thank you for keeping me alive", count);
+  ledMatrix.displayText(matrixBuffer, PA_RIGHT, scrollSpeed, scrollPause, PA_PRINT, PA_SCROLL_LEFT);
 
   // Send MQTT message
   Serial.println("");
