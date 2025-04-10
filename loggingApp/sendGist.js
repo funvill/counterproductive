@@ -1,7 +1,7 @@
 const fs = require('fs');
 const axios = require('axios');
 
-function sendReportToGist(inputFile, githubToken, gistId, gistFileName) {
+function sendReportToGist(inputFile, githubToken, gistId, gistFileName, callback) {
   const fileContent = fs.readFileSync(inputFile, 'utf8');
   axios.patch(`https://api.github.com/gists/${gistId}`, {
     files: {
@@ -15,11 +15,9 @@ function sendReportToGist(inputFile, githubToken, gistId, gistFileName) {
       'User-Agent': 'gist-updater'
     }
   }).then(res => {
-    console.log('✅ Gist updated:', res.data.html_url);
-    return true;
+    callback(null, res.data);
   }).catch(err => {
-    console.error('❌ Error updating gist:', err.response?.data || err.message);
-    return false;
+    callback(err);
   });
 }
 

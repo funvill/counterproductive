@@ -13,13 +13,13 @@ const OUTPUT_FILE = path.join(__dirname, 'report.html');
 // Helper function to format dates as MMM-DD in local time
 const formatDateMMMDD = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+  return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', timeZone: 'america/vancouver' });
 };
 
 // Helper function to format date and time in local time
 const formatDateTime = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return date.toLocaleString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'america/vancouver' });
 };
 
 // Main function to generate the report
@@ -35,7 +35,7 @@ const generateReport = (logFilePath) => {
       rawTimestamp: timestamp,
       timestamp: dateObj,
       hour: dateObj.getHours(), // Use local hours
-      date: dateObj.toISOString().split('T')[0], // Extract the date in UTC
+    date: dateObj.toLocaleDateString().split('T')[0], // Extract the date in UTC
       time: dateObj.toTimeString().split(' ')[0], // Extract the time in UTC
       count: parseInt(countStr, 10)
     };

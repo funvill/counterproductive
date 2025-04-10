@@ -1,12 +1,9 @@
 node_modules
 firmware/counterproductive/settings.h
 logs/settings.json
-logs/output.txt
 logs/report.html
-loggingApp/output.txt
 loggingApp/report.html
 loggingApp/sea-prep.blob
 loggingApp/sea-config.json
 loggingApp/settings.json
 loggingApp/bundle.js
-loggingApp/app.exe
