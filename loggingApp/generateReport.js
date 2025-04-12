@@ -7,9 +7,30 @@
 const fs = require('fs');
 
 // Helper function to format dates as MMM-DD in local time
-const formatDateMMMDD = (dateString) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', timeZone: 'america/vancouver' });
+// There is a whole bunch of fuckery here, because of timezones and date formating.
+//
+// All of these should produce the same results
+// console.log('formatDateMMMDD:', formatDateMMMDD(new Date('2025-04-01T23:02:48-0700')));
+// console.log('formatDateMMMDD:', formatDateMMMDD('2025-04-01'));
+// console.log('formatDateMMMDD:', formatDateMMMDD('2025-04-01T00:00:00.000Z'));
+const formatDateMMMDD = (dateInput) => {
+  let date;
+  if (typeof dateInput === 'string') {
+    if (dateInput.includes('T')) {
+      // Parse ISO string and adjust to local time
+      const [year, month, day] = dateInput.split('T')[0].split('-').map(Number);
+      date = new Date(year, month - 1, day);
+    } else {
+      // Handle date strings without time as local dates
+      const [year, month, day] = dateInput.split('-').map(Number);
+      date = new Date(year, month - 1, day);
+    }
+  } else if (dateInput instanceof Date) {
+    date = dateInput;
+  } else {
+    throw new Error('Invalid date input. Must be a string or Date object.');
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
 };
 
 // Helper function to format date and time in local time
@@ -102,7 +123,7 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
   <div class="stat">🔘 The button has been pressed <strong>${stats.lastCount}</strong> times, last pressed <span id='timeSinceLastSpan'><i>calculating...</i></span> ago</div>
   <div class="stat">😟 Time remaining to keep this project alive: <span id='timeRemainingSpan'><i>calculating...</i></span></div>
   <div class="stat">🗓️ Last button press: <strong>${formatDateTime(entries[entries.length - 1].timestamp)}</strong></div>
-  <div class="stat">⏳ Project has been running for: <strong>${Math.floor((entries[entries.length - 1].timestamp - entries[0].timestamp) / (1000 * 60 * 60 * 24))} days</strong></div>
+  <div class="stat">⏳ Project has been running for: <strong>${stats.totalDays} days</strong></div>
 
   <div>&nbsp;</div>
   <div class="stat">📊 Total rapid button presses (gap < 30 seconds): <strong>${stats.rapidPressCount}</strong> (${((stats.rapidPressCount / stats.lastCount) * 100).toFixed(2)}%)</div>
@@ -196,6 +217,8 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
 
 // Function to generate stats as a single JSON object
 const generateStats = (entries, filteredEntries) => {
+
+
   const uniqueDates = new Set(filteredEntries.map(e => e.date));
   const totalDays = uniqueDates.size;
   const averagePerDay = (filteredEntries.length / totalDays).toFixed(2);
@@ -328,12 +351,12 @@ function processLogFile(logFilePath) {
 
   // Note the timestamp includes the GMT offset. "-0700" is Vancouver/BC/Canada
 
-
-
   const lines = fs.readFileSync(logFilePath, 'utf8').split('\n').filter(line => line.startsWith('2025-'));
 
   const entries = lines.map(line => {
     const [timestamp, topic, countStr] = line.trim().split(/\s+/);
+    
+    // This produces a dateobject that is in UTC time
     const dateObj = new Date(timestamp);
     return {
       rawTimestamp: timestamp,
