@@ -5,10 +5,6 @@
  */
 
 const fs = require('fs');
-const path = require('path');
-
-const LOG_FILE = path.join(__dirname, 'output.txt');
-const OUTPUT_FILE = path.join(__dirname, 'report.html');
 
 // Helper function to format dates as MMM-DD in local time
 const formatDateMMMDD = (dateString) => {
@@ -35,7 +31,7 @@ const generateReport = (logFilePath) => {
       rawTimestamp: timestamp,
       timestamp: dateObj,
       hour: dateObj.getHours(), // Use local hours
-    date: dateObj.toLocaleDateString().split('T')[0], // Extract the date in UTC
+      date: dateObj.toLocaleDateString().split('T')[0], // Extract the date in UTC
       time: dateObj.toTimeString().split(' ')[0], // Extract the time in UTC
       count: parseInt(countStr, 10)
     };
@@ -48,25 +44,31 @@ const generateReport = (logFilePath) => {
     entries[i].timeDiff = (entries[i].timestamp - entries[i - 1].timestamp) / 1000;
   }
 
-  // Calculations
-  const uniqueDates = new Set(entries.map(e => e.date));
+  // Filter out rapid button presses (gap < 30 seconds) for stats calculations
+  const filteredEntries = entries.filter((entry, index) => {
+    if (index === 0) return true; // Keep the first entry
+    return entries[index].timeDiff >= 30;
+  });
+
+  // Update stats calculations to use filteredEntries instead of entries
+  const uniqueDates = new Set(filteredEntries.map(e => e.date));
   const totalDays = uniqueDates.size;
-  const averagePerDay = (entries.length / totalDays).toFixed(2);
-  const lastCount = entries[entries.length - 1].count;
+  const averagePerDay = (filteredEntries.length / totalDays).toFixed(2);
+  const lastCount = filteredEntries[filteredEntries.length - 1].count;
 
   // Most frequent hour
   const hourFreq = {};
-  entries.forEach(e => hourFreq[e.hour] = (hourFreq[e.hour] || 0) + 1);
+  filteredEntries.forEach(e => hourFreq[e.hour] = (hourFreq[e.hour] || 0) + 1);
   const [mostFreqHour, freqCount] = Object.entries(hourFreq).sort((a, b) => b[1] - a[1])[0];
 
   // Longest gap overall
   let maxGap = 0, gapStart, gapEnd;
-  for (let i = 1; i < entries.length; i++) {
-    const gap = entries[i].timeDiff;
+  for (let i = 1; i < filteredEntries.length; i++) {
+    const gap = filteredEntries[i].timeDiff;
     if (gap > maxGap) {
       maxGap = gap;
-      gapStart = entries[i - 1].timestamp;
-      gapEnd = entries[i].timestamp;
+      gapStart = filteredEntries[i - 1].timestamp;
+      gapEnd = filteredEntries[i].timestamp;
     }
   }
   const gapHours = Math.floor(maxGap / 3600);
@@ -74,9 +76,9 @@ const generateReport = (logFilePath) => {
 
   // Longest gap per day (same-date gaps only)
   const longestGapByDate = {};
-  for (let i = 1; i < entries.length; i++) {
-    const prev = entries[i - 1];
-    const curr = entries[i];
+  for (let i = 1; i < filteredEntries.length; i++) {
+    const prev = filteredEntries[i - 1];
+    const curr = filteredEntries[i];
     const gap = (curr.timestamp - prev.timestamp) / 1000;
     const dateKey = prev.date; // Attribute to date of earlier entry
 
@@ -87,31 +89,25 @@ const generateReport = (logFilePath) => {
 
   // Top 3 most active days
   const dateFreq = {};
-  entries.forEach(e => dateFreq[e.date] = (dateFreq[e.date] || 0) + 1);
+  filteredEntries.forEach(e => dateFreq[e.date] = (dateFreq[e.date] || 0) + 1);
   const topDateCounts = Object.entries(dateFreq).sort((a, b) => b[1] - a[1]).slice(0, 1);
 
   // Median and average time between updates
-  const gaps = entries.slice(1).map(e => e.timeDiff);
+  const gaps = filteredEntries.slice(1).map(e => e.timeDiff);
   const avgGap = gaps.reduce((sum, g) => sum + g, 0) / gaps.length;
   const sortedGaps = [...gaps].sort((a, b) => a - b);
   const medianGap = sortedGaps.length % 2 === 0 ? (sortedGaps[sortedGaps.length / 2 - 1] + sortedGaps[sortedGaps.length / 2]) / 2 : sortedGaps[Math.floor(sortedGaps.length / 2)];
 
-  const formatGap = (s) => `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
-
-  // Last entry time
-  const lastEntryTime = entries[entries.length - 1].timestamp.getTime();
-  const now = Date.now();
-
   // Calculate stats for the most popular day of the week
   const dayOfWeekCounts = Array(7).fill(0); // Array to store counts for each day (0 = Sunday, 6 = Saturday)
-  entries.forEach(e => {
+  filteredEntries.forEach(e => {
     const dayOfWeek = e.timestamp.getDay(); // Get day of the week (0 = Sunday, 6 = Saturday)
     dayOfWeekCounts[dayOfWeek]++;
   });
   const mostPopularDayIndex = dayOfWeekCounts.indexOf(Math.max(...dayOfWeekCounts));
   const mostPopularDayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][mostPopularDayIndex];
   const mostPopularDayCount = dayOfWeekCounts[mostPopularDayIndex];
-  const mostPopularDayPercentage = ((mostPopularDayCount / entries.length) * 100).toFixed(2);
+  const mostPopularDayPercentage = ((mostPopularDayCount / filteredEntries.length) * 100).toFixed(2);
 
   // Compare activity levels on weekdays versus weekends
   const weekdayCount = dayOfWeekCounts.slice(1, 6).reduce((sum, count) => sum + count, 0); // Monday to Friday
@@ -132,7 +128,7 @@ const generateReport = (logFilePath) => {
 
   const hourDayFreq = {}; // Track presses for each hour of each day
 
-  entries.forEach(e => {
+  filteredEntries.forEach(e => {
     const key = `${e.date}-${e.hour}`;
 
     // Set initial count if not already set
@@ -150,12 +146,13 @@ const generateReport = (logFilePath) => {
   });
 
   // Calculate rapid button presses (gap < 30 seconds)
-  let rapidPressCount = 0;
+  let rapidPressCount = 152; // Start at 152 because of the unlogged events
   for (let i = 1; i < entries.length; i++) {
     if (entries[i].timeDiff < 30) {
       rapidPressCount++;
     }
   }
+  
 
   // Calculate the longest session of rapid button presses (gaps < 30 seconds)
   let longestRapidSession = 0;
@@ -188,24 +185,29 @@ const generateReport = (logFilePath) => {
     </style>
   <h1>📊 CounterProductive Log Report</h1>
 
-
   <div class="stats">
   <div class="stat">🔘 The button has been pressed <strong>${lastCount}</strong> times, last pressed <span id='timeSinceLastSpan'><i>calculating...</i></span> ago</div>
   <div class="stat">😟 Time remaining to keep this project alive: <span id='timeRemainingSpan'><i>calculating...</i></span></div>
   <div class="stat">🗓️ Last button press: <strong>${formatDateTime(entries[entries.length - 1].timestamp)}</strong></div>
   <div class="stat">&nbsp;</div>
-  <div class="stat">📈 Average button presses per day: <strong>${averagePerDay}</strong> (${entries.length} entries over ${totalDays} days)</div>
+
+  <div class="stat">📊 Total rapid button presses (gap < 30 seconds): <strong>${rapidPressCount}</strong> (${((rapidPressCount / lastCount)*100).toFixed(2)}%)</div>
+  <div class="stat">📊 Most rapid button presses in a single session: <strong>${longestRapidSession}</strong> on <strong>${formatDateMMMDD(longestRapidSessionDate)}</strong></div>
+  <div>&nbsp;</div>
+
+  <div class="note">Note: Rapid button presses occurring within a 30-second interval significantly affect the statistics. <br />The following statistics combine rapid button presses into a single button press event.</div>
+  <div>&nbsp;</div>
+
+  <div class="stat">📈 Average button presses per day: <strong>${averagePerDay}</strong> (${filteredEntries.length} entries over ${totalDays} days)</div>
   <div class="stat">🕒 Longest between button presses: <strong>${gapHours}h ${gapMinutes}m</strong> between <code>${formatDateTime(gapStart)} → ${formatDateTime(gapEnd)}</code></div>
   <div class="stat">⏳ Average length between button presses: <strong>${formattedAvgGap}</strong></div>
   <div class="stat">⏳ <span title="The median is the middle value in a sorted list of numbers. It represents the point where half the values are smaller and half are larger.">Median</span> length between button presses: 
-      <strong>${Math.floor(medianGap / 3600)}h ${Math.floor((medianGap % 3600) / 60)}m ${Math.floor(medianGap % 60)}s</strong> (<i>Heavily influenced by rapid button presses</i>)
+      <strong>${Math.floor(medianGap / 3600)}h ${Math.floor((medianGap % 3600) / 60)}m ${Math.floor(medianGap % 60)}s</strong>
   </div>
   <div class="stat">📅 Most active day:
       ${topDateCounts.map(([d, c]) => `<strong>${formatDateMMMDD(d)}</strong> with <strong>${c}</strong> button presses`).join('\n')}  
   </div>
   <div class="stat">📊 The most presses in a single hour of a day: <strong>${maxPressesInHour}</strong> presses in the <strong>${maxPressesHour}:00</strong> on <strong>${formatDateMMMDD(maxPressesDate)}</strong></div>
-  <div class="stat">📊 Rapid button presses (gap < 30 seconds): <strong>${rapidPressCount}</strong></div>
-  <div class="stat">📊 Rapid button presses in a single session: <strong>${longestRapidSession}</strong> on <strong>${formatDateMMMDD(longestRapidSessionDate)}</strong></div>
   <div class="stat">⏰ Most popular hour of the day: <strong>${mostFreqHour}:00</strong> (${freqCount} button presses)</div>
   <div class="stat">📅 Most popular day of the week: <strong>${mostPopularDayName}</strong> with <strong>${mostPopularDayCount}</strong> (<strong>${mostPopularDayPercentage}%</strong>) button presses </div>
   <div class="stat">📊 Weekday vs Weekend Activity: 
