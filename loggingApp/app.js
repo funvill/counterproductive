@@ -15,7 +15,7 @@ const sendGist = require('./sendGist');
 
 // Consts 
 const MQTT_CLIENT_ID = 'COUNTER_PRODUCTIVE';
-const APP_VERSION = '2025Apr09';
+const APP_VERSION = '2025Apr11';
 
 // Load the settings from a JSON file
 const SETTINGS_FILE = 'settings.json';
@@ -42,104 +42,116 @@ console.log(`| https://blog.abluestar.com/projects/2025-counterproductive/      
 console.log(`| VERSION: ${APP_VERSION}                                                |`);
 console.log(`*-------------------------------------------------------------------*`);
 
-const args = process.argv.slice(2);
-const command = args[0].toLowerCase() || 'start';
 
+async function Start() {
 
-switch (command) {
-  case 'start':
-    console.log('Running in Start mode...');
-    // Existing application logic remains unchanged
-    break;
+  const args = process.argv.slice(2);
+  const command = (args[0] || 'start').toLowerCase();
 
-  case 'report': {
-    console.log('Running in Report mode...');
-    const inputFile = args[1] || 'output.txt';
-    const outputFile = args[2] || 'report.html';
+  console.log(`Command ${command}`);
 
-    if (!fs.existsSync(inputFile)) {
-      console.error(`❌ Input file not found: ${inputFile}`);
-      process.exit(1);
-    }
+  switch (command) {
+    case 'start':
+      // Existing application logic remains unchanged
+      break;
 
-    const reportHtml = generateReport(inputFile);
-    fs.writeFileSync(outputFile, reportHtml);
-    console.log(`✅ Report generated and saved to ${outputFile}`);
-    process.exit(0);
-  }
+    case 'report': {
+      const inputFile = args[1] || 'output.txt';
+      const outputFile = args[2] || 'report.html';
 
-  case 'send': {
-    console.log('Running in Send mode...');
-    const reportFilePath = path.join(__dirname, 'report.html');
-    const heartbeatFilePath = path.join(__dirname, 'heartbeat.json');
-
-    if (!fs.existsSync(reportFilePath)) {
-      console.error(`❌ Report file not found: ${reportFilePath}`);
-      process.exit(1);
-    }
-
-    if (!fs.existsSync(heartbeatFilePath)) {
-      console.error(`❌ Heartbeat file not found: ${heartbeatFilePath}`);
-      process.exit(1);
-    }
-
-    sendGist(reportFilePath, settings.githubToken, settings.gistId, settings.reportFileName, (err, data) => {
-      if (err) {
-        console.error(`❌ Failed to send report file to Gist: ${err}`);
-      } else {
-        console.log(`📤 Report Gist updated: ${data.html_url}`);
+      if (!fs.existsSync(inputFile)) {
+        console.error(`❌ Input file not found: ${inputFile}`);
+        process.exit(1);
       }
-    });
 
-    sendGist(heartbeatFilePath, settings.githubToken, settings.gistId, 'heartbeat.json', (err, data) => {
-      if (err) {
-        console.error(`❌ Failed to send heartbeat file to Gist: ${err}`);
-      } else {
-        console.log(`📤 Heartbeat Gist updated: ${data.html_url}`);
+      const reportHtml = generateReport(inputFile);
+      fs.writeFileSync(outputFile, reportHtml);
+      console.log(`✅ Report generated and saved to ${outputFile}`);
+      process.exit(0);
+    }
+
+    case 'send': {
+      const reportFilePath = path.join(__dirname, 'report.html');
+      const heartbeatFilePath = path.join(__dirname, 'heartbeat.json');
+
+      if (!fs.existsSync(reportFilePath)) {
+        console.error(`❌ Report file not found: ${reportFilePath}`);
+        process.exit(1);
       }
-    });
-    break;
-  }
 
-  default:
-    console.error(`❌ Unknown command: ${command}`);
-    process.exit(1);
+      if (!fs.existsSync(heartbeatFilePath)) {
+        console.error(`❌ Heartbeat file not found: ${heartbeatFilePath}`);
+        process.exit(1);
+      }
+
+      try {
+        const reportResult = await new Promise((resolve, reject) => {
+          sendGist(reportFilePath, settings.githubToken, settings.gistId, settings.gistFilename, (err, data) => {
+            if (err) reject(err);
+            else resolve(data);
+          });
+        });
+        console.log(`📤 Report Gist updated: ${reportResult.html_url}#file-counterproductive-report-html`);
+
+        const heartbeatResult = await new Promise((resolve, reject) => {
+          sendGist(heartbeatFilePath, settings.githubToken, settings.gistId, 'heartbeat.json', (err, data) => {
+            if (err) reject(err);
+            else resolve(data);
+          });
+        });
+        console.log(`📤 Heartbeat Gist updated: ${heartbeatResult.html_url}#file-heartbeat-json`);
+      } catch (error) {
+        console.error(`❌ Failed to send files to Gist: ${error}`);
+      }
+
+      process.exit(0);
+    }
+
+    default:
+      console.error(`❌ Unknown command: ${command}`);
+      process.exit(1);
+  }
 }
 
-// Subscribe to the MQTT topic
-console.log(`Connecting to MQTT broker: ${settings.broker}:${settings.port}`);
-const mqttClient = mqtt.connect(`mqtt://${settings.broker}:${settings.port}`, {
-  clientId: MQTT_CLIENT_ID
-});
+// Await the Start function before continuing
+(async () => {
+  await Start();
 
-mqttClient.on('connect', () => {
-  console.log('✅ Connected to MQTT broker');
-  mqttClient.subscribe(settings.topic, (err) => {
-    if (err) {
-      console.error('❌ Failed to subscribe to topic:', err);
+  // Subscribe to the MQTT topic
+  console.log(`Connecting to MQTT broker: ${settings.broker}:${settings.port}`);
+  const mqttClient = mqtt.connect(`mqtt://${settings.broker}:${settings.port}`, {
+    clientId: MQTT_CLIENT_ID
+  });
+
+  mqttClient.on('connect', () => {
+    console.log('✅ Connected to MQTT broker');
+    mqttClient.subscribe(settings.topic, (err) => {
+      if (err) {
+        console.error('❌ Failed to subscribe to topic:', err);
+      } else {
+        console.log(`✅ Subscribed to topic: ${settings.topic}`);
+      }
+    });
+  });
+
+  mqttClient.on('message', (topic, message) => {
+
+    // Check the topic to ensure that its for the count increase
+    // Example: CounterProductive/count
+    if (topic === settings.topicCount) {
+      console.log(''); // Add a line feed because of the heartbeat
+      console.log(`📩 Received message on topic: ${topic}, Message: ${message}`);
+      OnMessageCountIncrease(topic, message);
+      return;
+    } else if (topic === settings.topicHeartbeat) {
+      OnMessageHeartBeat(topic, message);
+      return;
     } else {
-      console.log(`✅ Subscribed to topic: ${settings.topic}`);
+      console.log(`Received message on different topic: ${topic}`);
+      return;
     }
   });
-});
-
-mqttClient.on('message', (topic, message) => {
-  
-  // Check the topic to ensure that its for the count increase
-  // Example: CounterProductive/count
-  if (topic === settings.topicCount) {
-    console.log(''); // Add a line feed because of the heartbeat
-    console.log(`📩 Received message on topic: ${topic}, Message: ${message}`);
-    OnMessageCountIncrease(topic, message);
-    return;
-  } else if (topic === settings.topicHeartbeat) {
-    OnMessageHeartBeat(topic, message);
-    return;
-  } else {
-    console.log(`Received message on different topic: ${topic}`);
-    return;
-  }
-});
+})();
 
 // Convert date to string with timezone offset
 // Example: 2025-04-09T19:02:33-07:00

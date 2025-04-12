@@ -29,7 +29,72 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
       div.stat { margin: 0; padding: 0; }
       .gap-visualization { display: flex; flex-wrap: nowrap; overflow-x: auto; margin-top: 20px; }
       .gap-box { display: inline-block; margin-right: 2px; text-align: center; font-size: 10px; color: #fff; background-color: #007bff; border-radius: 4px; overflow: hidden; }
-      .gap-box span { display: block; padding: 2px; }    
+      .gap-box span { display: block; padding: 2px; }
+      .gap-visualization {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .day-row {
+      display: flex;
+      align-items: center;
+    }
+    .day-row.weekend {
+      background-color: #f0f0f0; /* Light gray background for weekends */
+    }
+    .day-label {
+      width: 150px; /* Increased width to accommodate day of the week */
+      font-weight: bold;
+      text-align: right;
+      padding-right: 5px;
+      font-family: monospace;
+    }
+    .day-boxes {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 2px;
+      flex-grow: 1;
+    }
+    .day-total {
+      width: 100px;
+      font-weight: bold;
+      text-align: right;
+      padding-left: 5px;
+    }
+    .hour-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      text-align: center;
+      line-height: 20px;
+      font-size: 10px;
+      color: #fff;
+      margin: 0; /* Ensure no extra margin */
+      padding: 0; /* Ensure no extra padding */
+      box-sizing: border-box; /* Include border in width/height */
+    }
+    .hour-box.gap {
+      background-color: #007bff;
+    }
+    .hour-box.pressed {
+      background-color: #28a745;
+    }
+    .hour-box.header {
+      background-color: #ffffff;
+      color: #000;
+      font-weight: bold;
+      border: 1px solid #ccc;
+      width: 20px; /* Match the width of regular boxes */
+      height: 20px; /* Match the height of regular boxes */
+      line-height: 20px; /* Match the vertical alignment */
+      text-align: center;
+      margin: 0; /* Ensure no extra margin */
+      padding: 0; /* Ensure no extra padding */
+      box-sizing: border-box; /* Include border in width/height */
+    }
+    #LastUpdated {
+      display: none;
+    }
     </style>
   <h1>📊 CounterProductive Log Report</h1>
 
@@ -39,11 +104,12 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
   <div class="stat">🗓️ Last button press: <strong>${formatDateTime(entries[entries.length - 1].timestamp)}</strong></div>
   <div class="stat">⏳ Project has been running for: <strong>${Math.floor((entries[entries.length - 1].timestamp - entries[0].timestamp) / (1000 * 60 * 60 * 24))} days</strong></div>
 
+  <div>&nbsp;</div>
   <div class="stat">📊 Total rapid button presses (gap < 30 seconds): <strong>${stats.rapidPressCount}</strong> (${((stats.rapidPressCount / stats.lastCount) * 100).toFixed(2)}%)</div>
   <div class="stat">📊 Most rapid button presses in a single session: <strong>${stats.longestRapidSession}</strong> on <strong>${formatDateMMMDD(stats.longestRapidSessionDate)}</strong></div>
   <div>&nbsp;</div>
 
-  <div class="note">Note: Rapid button presses occurring within a 30-second interval significantly affect the statistics. <br />The following statistics combine rapid button presses into a single button press event.</div>
+  <div class="note">📎 Note: Rapid button presses occurring within a 30-second interval significantly affect the statistics. <br />The following statistics combine rapid button presses into a single button press event.</div>
   <div>&nbsp;</div>
 
   <div class="stat">📈 Average button presses per day: <strong>${stats.averagePerDay}</strong> (${stats.filteredEntries.length} entries over ${stats.totalDays} days)</div>
@@ -124,73 +190,6 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
   <p>Generated on: <strong>${formatDateTime(new Date())}</strong></p>
   </div> <!-- End of stats div -->
 
-  <style>
-    .gap-visualization {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .day-row {
-      display: flex;
-      align-items: center;
-    }
-    .day-row.weekend {
-      background-color: #f0f0f0; /* Light gray background for weekends */
-    }
-    .day-label {
-      width: 150px; /* Increased width to accommodate day of the week */
-      font-weight: bold;
-      text-align: right;
-      padding-right: 5px;
-      font-family: monospace;
-    }
-    .day-boxes {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 2px;
-      flex-grow: 1;
-    }
-    .day-total {
-      width: 100px;
-      font-weight: bold;
-      text-align: right;
-      padding-left: 5px;
-    }
-    .hour-box {
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
-      text-align: center;
-      line-height: 20px;
-      font-size: 10px;
-      color: #fff;
-      margin: 0; /* Ensure no extra margin */
-      padding: 0; /* Ensure no extra padding */
-      box-sizing: border-box; /* Include border in width/height */
-    }
-    .hour-box.gap {
-      background-color: #007bff;
-    }
-    .hour-box.pressed {
-      background-color: #28a745;
-    }
-    .hour-box.header {
-      background-color: #ffffff;
-      color: #000;
-      font-weight: bold;
-      border: 1px solid #ccc;
-      width: 20px; /* Match the width of regular boxes */
-      height: 20px; /* Match the height of regular boxes */
-      line-height: 20px; /* Match the vertical alignment */
-      text-align: center;
-      margin: 0; /* Ensure no extra margin */
-      padding: 0; /* Ensure no extra padding */
-      box-sizing: border-box; /* Include border in width/height */
-    }
-    #LastUpdated {
-      display: none;
-    }
-  </style>
   <span id='LastUpdated'>${entries[entries.length - 1].timestamp.toLocaleString()}</span>
   `;
 };
@@ -357,7 +356,7 @@ function processLogFile(logFilePath) {
 
   // Because of rapit button presses. 
   // We want to combine entries together that are less then 30 seconds apart. 
-  const RAPID_BUTTON_PRESSER_TIMEOUT_SECONDS = 30; 
+  const RAPID_BUTTON_PRESSER_TIMEOUT_SECONDS = 30;
   const filteredEntries = entries.filter((entry, index) => {
     if (index === 0) return true;
     return entries[index].timeDiff >= RAPID_BUTTON_PRESSER_TIMEOUT_SECONDS;
