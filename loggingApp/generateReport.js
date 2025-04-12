@@ -52,10 +52,10 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
       .gap-box { display: inline-block; margin-right: 2px; text-align: center; font-size: 10px; color: #fff; background-color: #007bff; border-radius: 4px; overflow: hidden; }
       .gap-box span { display: block; padding: 2px; }
       .gap-visualization {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
     .day-row {
       display: flex;
       align-items: center;
@@ -66,6 +66,7 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
     .day-label {
       width: 150px; /* Increased width to accommodate day of the week */
       font-weight: bold;
+      font-size: larger;
       text-align: right;
       padding-right: 5px;
       font-family: monospace;
@@ -82,6 +83,10 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
       text-align: right;
       padding-left: 5px;
     }
+
+    .day-total-hot {
+      color: rgb(248, 68, 40);
+    }
     .hour-box {
       width: 20px;
       height: 20px;
@@ -95,10 +100,13 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
       box-sizing: border-box; /* Include border in width/height */
     }
     .hour-box.gap {
-      background-color: #007bff;
+      background-color:rgb(101, 175, 253);
     }
     .hour-box.pressed {
       background-color: #28a745;
+    }
+    .hour-box.hotButtonPressing {
+      background-color:rgb(248, 68, 40);
     }
     .hour-box.header {
       background-color: #ffffff;
@@ -116,6 +124,13 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
     #LastUpdated {
       display: none;
     }
+    .stat ul {
+      margin: 0 0 1em 0; /* Remove margin */
+    }
+    .stat ol {
+      margin: 0 0 1em 0; /* Remove margin */
+    }
+
     </style>
   <h1>📊 CounterProductive Log Report</h1>
 
@@ -135,9 +150,9 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
 
   <div class="stat">📈 Average button presses per day: <strong>${stats.averagePerDay}</strong> (${stats.filteredEntries.length} entries over ${stats.totalDays} days)</div>
   <div class="stat">🕒 Top 3 Longest gaps between button presses:
-    <ul>
+    <ol>
       ${stats.topGaps.map(gap => `<li><strong>${Math.floor(gap.gap / 3600)}h ${Math.floor((gap.gap % 3600) / 60)}m</strong> between <code>${formatDateTime(gap.start)} → ${formatDateTime(gap.end)}</code></li>`).join('')}
-    </ul>
+    </ol>
   </div>
   <div class="stat">⏳ Average length between button presses: <strong>${stats.formattedAvgGap}</strong></div>
   <div class="stat">⏳ <span title="The median is the middle value in a sorted list of numbers. It represents the point where half the values are smaller and half are larger.">Median</span> length between button presses: 
@@ -148,11 +163,71 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
   </div>
   <div class="stat">📊 The most presses in a single hour of a day: <strong>${stats.maxPressesInHour}</strong> presses in the <strong>${stats.maxPressesHour}:00</strong> on <strong>${formatDateMMMDD(stats.maxPressesDate)}</strong></div>
   <div class="stat">⏰ Most popular hour of the day: <strong>${stats.mostFreqHour}:00</strong> (${stats.freqCount} button presses)</div>
-  <div class="stat">📅 Most popular day of the week: <strong>${stats.mostPopularDayName}</strong> with <strong>${stats.mostPopularDayCount}</strong> (<strong>${stats.mostPopularDayPercentage}%</strong>) button presses </div>
-  <div class="stat">📊 Weekday vs Weekend Activity: 
-      <strong>${stats.weekdayCount}</strong> (${stats.weekdayPercentage}%) presses on weekdays vs 
-      <strong>${stats.weekendCount}</strong> (${stats.weekendPercentage}%) presses on weekends 
+  <div class="stat">📅 Button presses by day of the week:
+
+  ${stats.dayOfWeekStats.map(dayStat => `
+          <div class="day-row">
+            <div class="day-label">${dayStat.day}:</div>
+            <div class="day-boxes">
+              ${'🟩'.repeat(Math.round(dayStat.percentage / 5))}
+              ${'▪️'.repeat(Math.round((100 - dayStat.percentage) / 5))}
+            </div>
+            <div class="day-total header"><strong>${dayStat.count}</strong> (${dayStat.percentage}%)</div>
+          </div>
+        `).join('')}
+        <div>&nbsp;</div>
   </div>
+
+  <!-- Weekday vs Weekend Activity--->
+  <div class="stat">📊 Weekday vs Weekend Activity:</div> 
+    <div class="day-row">
+      <div class="day-label" title='Monday - Friday'>🏢 Weekdays:</div>
+      <div class="day-boxes">
+        ${'🟩'.repeat(Math.round(stats.weekdayPercentage / 5))}
+        ${'▪️'.repeat(Math.round((100 - stats.weekdayPercentage) / 5))}
+      </div>
+      <div class="day-total header"><strong>${stats.weekdayCount}</strong> (${stats.weekdayPercentage}%)</div>
+    </div>
+    <div class="day-row">
+      <div class="day-label" title='Saturday, and Sunday'>🏖️ Weekends:</div>
+      <div class="day-boxes">
+        ${'🟩'.repeat(Math.round(stats.weekendPercentage / 5))}        
+        ${'▪️'.repeat(Math.round((100 - stats.weekendPercentage) / 5))}
+      </div>
+      <div class="day-total header"><strong>${stats.weekendCount}</strong> (${stats.weekendPercentage}%)</div>
+    </div>
+    <div>&nbsp;</div>
+  </div>
+
+  <div class="stat">⏳ Activity by time of day:
+      <div class="day-row">
+        <div class="day-label"><span title='Morning: 00:00am - 07:59am'>🌅 Morning</span>:</div>
+        <div class="day-boxes">
+          ${'🟩'.repeat(Math.round(stats.timeChunksStats.morning.percentage / 5))}
+          ${'▪️'.repeat(Math.round((100 - stats.timeChunksStats.morning.percentage) / 5))}
+        </div>
+        <div class="day-total header"><strong>${stats.timeChunksStats.morning.count}</strong> (${stats.timeChunksStats.morning.percentage}%)</div>
+      </div>
+
+      <div class="day-row">
+        <div class="day-label"><span title='Daytime: 08:00am - 16:59pm'>🌞 Daytime</span>:</div>
+        <div class="day-boxes">
+          ${'🟩'.repeat(Math.round(stats.timeChunksStats.daytime.percentage / 5))}
+          ${'▪️'.repeat(Math.round((100 - stats.timeChunksStats.daytime.percentage) / 5))}
+        </div>
+        <div class="day-total header"><strong>${stats.timeChunksStats.daytime.count}</strong> (${stats.timeChunksStats.daytime.percentage}%)</div>
+      </div>   
+
+      <div class="day-row">
+        <div class="day-label"><span title='Evening: 17:00pm - 23:59pm'>🌙 Evening</span>:</div>
+        <div class="day-boxes">
+          ${'🟩'.repeat(Math.round(stats.timeChunksStats.evening.percentage / 5))}
+          ${'▪️'.repeat(Math.round((100 - stats.timeChunksStats.evening.percentage) / 5))}
+        </div>
+        <div class="day-total header"><strong>${stats.timeChunksStats.evening.count}</strong> (${stats.timeChunksStats.evening.percentage}%)</div>
+      </div>
+      <div>&nbsp;</div>
+    </div>
 
   <h2>📅 Day Visualization</h2>
   <div class="gap-visualization">
@@ -181,41 +256,74 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
 
         const dailyEntries = entries.filter(e => e.date === date);
         const totalEntries = dailyEntries.length; // Calculate total entries for the day
+        const totalEntriesHot = totalEntries >= 10;
         const dayOfWeek = new Date(nextDate).toLocaleDateString('en-US', { weekday: 'short' }); // Get three-letter day of the week
         const isWeekend = dayOfWeek === 'Sat' || dayOfWeek === 'Sun'; // Check if the day is a weekend
 
         return `
           <div class="day-row ${isWeekend ? 'weekend' : ''}">
-            <div class="day-label">${formatDateMMMDD(nextDate)} (${dayOfWeek})</div>
+            <div class="day-label">${isWeekend ? '🏖️ ' : ''}${formatDateMMMDD(nextDate)} (${dayOfWeek})</div>
             <div class="day-boxes">
               ${Array.from({ length: 24 }).map((_, hour) => {
           const hourEntries = dailyEntries.filter(e => e.hour === hour);
           const isPressed = hourEntries.length > 0;
+          const isHot = hourEntries.length >= 10;
           const tooltip = isPressed
-            ? hourEntries.map(e => `${e.timestamp.toLocaleTimeString()} (#${e.count})`).join(', ')
+            ? `Pressed ${hourEntries.length} times. ` + hourEntries.map(e => `${e.timestamp.toLocaleTimeString()} (#${e.count})`).join(', ')
             : `No presses during ${hour}:00 - ${hour + 1}:00`;
 
           return `
-                  <div class="hour-box ${isPressed ? 'pressed' : 'gap'}" title="${tooltip}">
+                  <div class="hour-box ${isPressed ? 'pressed' : 'gap'} ${isHot ? 'hotButtonPressing' : ''}" title="${tooltip}">
                     ${isPressed ? hourEntries.length : ''}
                   </div>
                 `;
         }).join('')}
             </div>
-            <div class="day-total">${totalEntries}</div> <!-- Total entries for the day -->
+            <div class="day-total ${totalEntriesHot ? 'day-total-hot' : ''}">${totalEntries}</div> <!-- Total entries for the day -->
           </div>
         `;
       }).join('')}
   </div>
 
-  <p>Generated on: <strong>${formatDateTime(new Date())}</strong></p>
+  <div style='text-align: center'><p>Generated on: <strong>${formatDateTime(new Date())}</strong></p></div>
   </div> <!-- End of stats div -->
 
   <span id='LastUpdated'>${entries[entries.length - 1].timestamp.toLocaleString()}</span>
   `;
 };
 
-// Function to generate stats as a single JSON object
+// Add a new stat to calculate events in 8-hour chunks
+const calculateTimeChunksStats = (filteredEntries) => {
+  const timeChunks = { morning: 0, daytime: 0, evening: 0 };
+
+  filteredEntries.forEach(e => {
+    if (e.hour >= 0 && e.hour <= 7) {
+      timeChunks.morning++;
+    } else if (e.hour >= 8 && e.hour <= 16) {
+      timeChunks.daytime++;
+    } else if (e.hour >= 17 && e.hour <= 23) {
+      timeChunks.evening++;
+    }
+  });
+
+  const totalEvents = filteredEntries.length;
+  return {
+    morning: {
+      count: timeChunks.morning,
+      percentage: ((timeChunks.morning / totalEvents) * 100).toFixed(2)
+    },
+    daytime: {
+      count: timeChunks.daytime,
+      percentage: ((timeChunks.daytime / totalEvents) * 100).toFixed(2)
+    },
+    evening: {
+      count: timeChunks.evening,
+      percentage: ((timeChunks.evening / totalEvents) * 100).toFixed(2)
+    }
+  };
+};
+
+// Update the generateStats function to calculate counts and percentages for each day of the week
 const generateStats = (entries, filteredEntries) => {
 
 
@@ -249,21 +357,25 @@ const generateStats = (entries, filteredEntries) => {
   const sortedGaps = [...gaps].sort((a, b) => a - b);
   const medianGap = sortedGaps.length % 2 === 0 ? (sortedGaps[sortedGaps.length / 2 - 1] + sortedGaps[sortedGaps.length / 2]) / 2 : sortedGaps[Math.floor(sortedGaps.length / 2)];
 
-  // Calculate stats for the most popular day of the week
+  // Calculate stats for each day of the week
   const dayOfWeekCounts = Array(7).fill(0);
   filteredEntries.forEach(e => {
     const dayOfWeek = e.timestamp.getDay();
     dayOfWeekCounts[dayOfWeek]++;
   });
-  const mostPopularDayIndex = dayOfWeekCounts.indexOf(Math.max(...dayOfWeekCounts));
-  const mostPopularDayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][mostPopularDayIndex];
-  const mostPopularDayCount = dayOfWeekCounts[mostPopularDayIndex];
-  const mostPopularDayPercentage = ((mostPopularDayCount / filteredEntries.length) * 100).toFixed(2);
+
+  const totalPresses = filteredEntries.length;
+  const dayOfWeekStats = dayOfWeekCounts.map((count, index) => {
+    return {
+      day: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][index],
+      count,
+      percentage: ((count / totalPresses) * 100).toFixed(2)
+    };
+  });
 
   // Compare activity levels on weekdays versus weekends
   const weekdayCount = dayOfWeekCounts.slice(1, 6).reduce((sum, count) => sum + count, 0);
   const weekendCount = dayOfWeekCounts[0] + dayOfWeekCounts[6];
-  const totalPresses = weekdayCount + weekendCount;
   const weekdayPercentage = ((weekdayCount / totalPresses) * 100).toFixed(2);
   const weekendPercentage = ((weekendCount / totalPresses) * 100).toFixed(2);
 
@@ -310,6 +422,8 @@ const generateStats = (entries, filteredEntries) => {
     }
   }
 
+  const timeChunksStats = calculateTimeChunksStats(filteredEntries);
+
   // Include filteredEntries in the stats object
   return {
     lastCount,
@@ -321,9 +435,7 @@ const generateStats = (entries, filteredEntries) => {
     topDateCounts,
     avgGap,
     medianGap,
-    mostPopularDayName,
-    mostPopularDayCount,
-    mostPopularDayPercentage,
+    dayOfWeekStats,
     weekdayCount,
     weekdayPercentage,
     weekendCount,
@@ -335,6 +447,7 @@ const generateStats = (entries, filteredEntries) => {
     rapidPressCount,
     longestRapidSession,
     longestRapidSessionDate,
+    timeChunksStats,
     filteredEntries // Added this property
   };
 };
@@ -355,7 +468,7 @@ function processLogFile(logFilePath) {
 
   const entries = lines.map(line => {
     const [timestamp, topic, countStr] = line.trim().split(/\s+/);
-    
+
     // This produces a dateobject that is in UTC time
     const dateObj = new Date(timestamp);
     return {
