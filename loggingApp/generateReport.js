@@ -61,18 +61,14 @@ const generateReport = (logFilePath) => {
   filteredEntries.forEach(e => hourFreq[e.hour] = (hourFreq[e.hour] || 0) + 1);
   const [mostFreqHour, freqCount] = Object.entries(hourFreq).sort((a, b) => b[1] - a[1])[0];
 
-  // Longest gap overall
-  let maxGap = 0, gapStart, gapEnd;
-  for (let i = 1; i < filteredEntries.length; i++) {
-    const gap = filteredEntries[i].timeDiff;
-    if (gap > maxGap) {
-      maxGap = gap;
-      gapStart = filteredEntries[i - 1].timestamp;
-      gapEnd = filteredEntries[i].timestamp;
-    }
-  }
-  const gapHours = Math.floor(maxGap / 3600);
-  const gapMinutes = Math.floor((maxGap % 3600) / 60);
+  // Calculate top 3 longest gaps overall
+  const topGaps = filteredEntries.slice(1).map((entry, index) => {
+    return {
+      gap: (entry.timestamp - filteredEntries[index].timestamp) / 1000,
+      start: filteredEntries[index].timestamp,
+      end: entry.timestamp
+    };
+  }).sort((a, b) => b.gap - a.gap).slice(0, 3);
 
   // Longest gap per day (same-date gaps only)
   const longestGapByDate = {};
@@ -189,6 +185,8 @@ const generateReport = (logFilePath) => {
   <div class="stat">🔘 The button has been pressed <strong>${lastCount}</strong> times, last pressed <span id='timeSinceLastSpan'><i>calculating...</i></span> ago</div>
   <div class="stat">😟 Time remaining to keep this project alive: <span id='timeRemainingSpan'><i>calculating...</i></span></div>
   <div class="stat">🗓️ Last button press: <strong>${formatDateTime(entries[entries.length - 1].timestamp)}</strong></div>
+  <div class="stat">⏳ Project has been running for: <strong>${Math.floor((entries[entries.length - 1].timestamp - entries[0].timestamp) / (1000 * 60 * 60 * 24))} days</strong></div>
+
   <div class="stat">&nbsp;</div>
 
   <div class="stat">📊 Total rapid button presses (gap < 30 seconds): <strong>${rapidPressCount}</strong> (${((rapidPressCount / lastCount)*100).toFixed(2)}%)</div>
@@ -199,7 +197,6 @@ const generateReport = (logFilePath) => {
   <div>&nbsp;</div>
 
   <div class="stat">📈 Average button presses per day: <strong>${averagePerDay}</strong> (${filteredEntries.length} entries over ${totalDays} days)</div>
-  <div class="stat">🕒 Longest between button presses: <strong>${gapHours}h ${gapMinutes}m</strong> between <code>${formatDateTime(gapStart)} → ${formatDateTime(gapEnd)}</code></div>
   <div class="stat">⏳ Average length between button presses: <strong>${formattedAvgGap}</strong></div>
   <div class="stat">⏳ <span title="The median is the middle value in a sorted list of numbers. It represents the point where half the values are smaller and half are larger.">Median</span> length between button presses: 
       <strong>${Math.floor(medianGap / 3600)}h ${Math.floor((medianGap % 3600) / 60)}m ${Math.floor(medianGap % 60)}s</strong>
@@ -213,6 +210,11 @@ const generateReport = (logFilePath) => {
   <div class="stat">📊 Weekday vs Weekend Activity: 
       <strong>${weekdayCount}</strong> (${weekdayPercentage}%) presses on weekdays vs 
       <strong>${weekendCount}</strong> (${weekendPercentage}%) presses on weekends 
+  </div>
+  <div class="stat">🕒 Top 3 Longest gaps between button presses:
+    <ul>
+      ${topGaps.map(gap => `<li><strong>${Math.floor(gap.gap / 3600)}h ${Math.floor((gap.gap % 3600) / 60)}m</strong> between <code>${formatDateTime(gap.start)} → ${formatDateTime(gap.end)}</code></li>`).join('')}
+    </ul>
   </div>
 
   <h2>📅 Day Visualization</h2>
