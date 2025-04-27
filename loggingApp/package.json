@@ -5,6 +5,7 @@
   "url": "https://blog.abluestar.com/projects/2025-counterproductive/",
   "main": "app.js",
   "scripts": {
+    "report": "npm run build:0_bundle && node bundle.js report",
     "build": "npm run build:0_bundle && npm run build:1_GenerateSeaConfig && npm run build:2_GenerateBlob && npm run build:3_CopyNodeExecutable && npm run build:4_RemoveSignature && npm run build:5_InjectBlob",
     "build:0_bundle": "esbuild app.js --bundle --platform=node --outfile=bundle.js",
     "build:1_GenerateSeaConfig": "node --experimental-sea-config sea-config.json",

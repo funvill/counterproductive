@@ -145,15 +145,21 @@ const generateHTMLTemplate = (stats, entries, filteredEntries) => {
   <div class="stat">📊 Most rapid button presses in a single session: <strong>${stats.longestRapidSession}</strong> on <strong>${formatDateMMMDD(stats.longestRapidSessionDate)}</strong></div>
   <div>&nbsp;</div>
 
-  <div class="note">📎 Note: Rapid button presses occurring within a 30-second interval significantly affect the statistics. <br />The following statistics combine rapid button presses into a single button press event.</div>
-  <div>&nbsp;</div>
-
-  <div class="stat">📈 Average button presses per day: <strong>${stats.averagePerDay}</strong> (${stats.filteredEntries.length} entries over ${stats.totalDays} days)</div>
-  <div class="stat">🕒 Top 3 Longest gaps between button presses:
+  <div class="stat">🕒 Top 10 Longest gaps between button presses:
     <ol>
-      ${stats.topGaps.map(gap => `<li><strong>${Math.floor(gap.gap / 3600)}h ${Math.floor((gap.gap % 3600) / 60)}m</strong> between <code>${formatDateTime(gap.start)} → ${formatDateTime(gap.end)}</code></li>`).join('')}
+      ${stats.topGaps.map(gap => `<li>${(Math.floor(gap.gap / 3600) > 24) ? '💀' : ''} <strong>${Math.floor(gap.gap / 3600)}h ${Math.floor((gap.gap % 3600) / 60)}m</strong> between <code>${formatDateTime(gap.start)} → ${formatDateTime(gap.end)}</code></li>`).join('')}
     </ol>
   </div>
+
+  <div>&nbsp;</div>
+  <div class="note">
+    <table style='border: solid 1px red;'><tr><td valign='top'>📎</td><td>
+    Note: Rapid button presses occurring within a 30-second interval significantly affect the statistics. <br />The following statistics combine rapid button presses into a single button press event.
+    </td></tr></table>
+  </div>
+  
+  <div>&nbsp;</div>
+  <div class="stat">📈 Average button presses per day: <strong>${stats.averagePerDay}</strong> (${stats.filteredEntries.length} entries over ${stats.totalDays} days)</div>
   <div class="stat">⏳ Average length between button presses: <strong>${stats.formattedAvgGap}</strong></div>
   <div class="stat">⏳ <span title="The median is the middle value in a sorted list of numbers. It represents the point where half the values are smaller and half are larger.">Median</span> length between button presses: 
       <strong>${Math.floor(stats.medianGap / 3600)}h ${Math.floor((stats.medianGap % 3600) / 60)}m ${Math.floor(stats.medianGap % 60)}s</strong>
@@ -344,7 +350,7 @@ const generateStats = (entries, filteredEntries) => {
       start: filteredEntries[index].timestamp,
       end: entry.timestamp
     };
-  }).sort((a, b) => b.gap - a.gap).slice(0, 3);
+  }).sort((a, b) => b.gap - a.gap).slice(0, 10);
 
   // Top 3 most active days
   const dateFreq = {};
