@@ -1,0 +1,4475 @@
+
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+      h1 { color: #333; }
+      .stat { margin-bottom: 1em; }
+      code { background: #eee; padding: 2px 4px; border-radius: 4px; }
+      div.stat { margin: 0; padding: 0; }
+      .gap-visualization { display: flex; flex-wrap: nowrap; overflow-x: auto; margin-top: 20px; }
+      .gap-box { display: inline-block; margin-right: 2px; text-align: center; font-size: 10px; color: #fff; background-color: #007bff; border-radius: 4px; overflow: hidden; }
+      .gap-box span { display: block; padding: 2px; }
+      .gap-visualization {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+    .day-row {
+      display: flex;
+      align-items: center;
+    }
+    .day-row.weekend {
+      background-color: #f0f0f0; /* Light gray background for weekends */
+    }
+    .day-label {
+      width: 150px; /* Increased width to accommodate day of the week */
+      font-weight: bold;
+      font-size: larger;
+      text-align: right;
+      padding-right: 5px;
+      font-family: monospace;
+    }
+    .day-boxes {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 2px;
+      flex-grow: 1;
+    }
+    .day-total {
+      width: 100px;
+      font-weight: bold;
+      text-align: right;
+      padding-left: 5px;
+    }
+
+    .day-total-hot {
+      color: rgb(248, 68, 40);
+    }
+    .hour-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      text-align: center;
+      line-height: 20px;
+      font-size: 10px;
+      color: #fff;
+      margin: 0; /* Ensure no extra margin */
+      padding: 0; /* Ensure no extra padding */
+      box-sizing: border-box; /* Include border in width/height */
+    }
+    .hour-box.gap {
+      background-color:rgb(101, 175, 253);
+    }
+    .hour-box.pressed {
+      background-color: #28a745;
+    }
+    .hour-box.hotButtonPressing {
+      background-color:rgb(248, 68, 40);
+    }
+    .hour-box.header {
+      background-color: #ffffff;
+      color: #000;
+      font-weight: bold;
+      border: 1px solid #ccc;
+      width: 20px; /* Match the width of regular boxes */
+      height: 20px; /* Match the height of regular boxes */
+      line-height: 20px; /* Match the vertical alignment */
+      text-align: center;
+      margin: 0; /* Ensure no extra margin */
+      padding: 0; /* Ensure no extra padding */
+      box-sizing: border-box; /* Include border in width/height */
+    }
+    #LastUpdated {
+      display: none;
+    }
+    .stat ul {
+      margin: 0 0 1em 0; /* Remove margin */
+    }
+    .stat ol {
+      margin: 0 0 1em 0; /* Remove margin */
+    }
+
+    </style>
+  <h1>📊 CounterProductive Log Report</h1>
+
+  <div class="stats">
+  <div class="stat">🔘 The button has been pressed <strong>603</strong> times, last pressed <span id='timeSinceLastSpan'><i>calculating...</i></span> ago</div>
+  <div class="stat">😟 Time remaining to keep this project alive: <span id='timeRemainingSpan'><i>calculating...</i></span></div>
+  <div class="stat">🗓️ Last button press: <strong>May 09, 03:39:02 PM</strong></div>
+  <div class="stat">⏳ Project has been running for: <strong>40 days</strong></div>
+
+  <div>&nbsp;</div>
+  <div class="stat">📊 Total rapid button presses (gap < 30 seconds): <strong>399</strong> (66.17%)</div>
+  <div class="stat">📊 Most rapid button presses in a single session: <strong>28</strong> on <strong>Apr 05</strong></div>
+  <div>&nbsp;</div>
+
+  <div class="stat">🕒 Top 10 Longest gaps between button presses:
+    <ol>
+      <li>💀 <strong>25h 11m</strong> between <code>Apr 17, 11:31:05 AM → Apr 18, 12:42:56 PM</code></li><li> <strong>23h 1m</strong> between <code>Apr 18, 07:45:49 PM → Apr 19, 06:47:42 PM</code></li><li> <strong>22h 57m</strong> between <code>Apr 21, 12:12:59 PM → Apr 22, 11:10:34 AM</code></li><li> <strong>21h 57m</strong> between <code>Apr 14, 05:27:11 PM → Apr 15, 03:24:31 PM</code></li><li> <strong>21h 26m</strong> between <code>Apr 25, 09:14:13 PM → Apr 26, 06:41:06 PM</code></li><li> <strong>20h 14m</strong> between <code>Mar 31, 06:59:41 PM → Apr 01, 03:14:05 PM</code></li><li> <strong>20h 9m</strong> between <code>Apr 07, 06:44:15 PM → Apr 08, 02:53:54 PM</code></li><li> <strong>19h 40m</strong> between <code>Apr 22, 07:40:17 PM → Apr 23, 03:20:51 PM</code></li><li> <strong>17h 39m</strong> between <code>Apr 02, 08:40:25 PM → Apr 03, 02:19:25 PM</code></li><li> <strong>17h 30m</strong> between <code>Apr 29, 03:22:17 PM → Apr 30, 08:52:52 AM</code></li>
+    </ol>
+  </div>
+
+  <div>&nbsp;</div>
+  <div class="note">
+    <table style='border: solid 1px red;'><tr><td valign='top'>📎</td><td>
+    Note: Rapid button presses occurring within a 30-second interval significantly affect the statistics. <br />The following statistics combine rapid button presses into a single button press event.
+    </td></tr></table>
+  </div>
+  
+  <div>&nbsp;</div>
+  <div class="stat">📈 Average button presses per day: <strong>4.78</strong> (191 entries over 40 days)</div>
+  <div class="stat">⏳ Average length between button presses: <strong>4h 55m 27s</strong></div>
+  <div class="stat">⏳ <span title="The median is the middle value in a sorted list of numbers. It represents the point where half the values are smaller and half are larger.">Median</span> length between button presses: 
+      <strong>2h 23m 31s</strong>
+  </div>
+  <div class="stat">📅 Most active day:
+      <strong>Apr 05</strong> with <strong>15</strong> button presses  
+  </div>
+  <div class="stat">📊 The most presses in a single hour of a day: <strong>5</strong> presses in the <strong>17:00</strong> on <strong>Apr 11</strong></div>
+  <div class="stat">⏰ Most popular hour of the day: <strong>15:00</strong> (32 button presses)</div>
+  <div class="stat">📅 Button presses by day of the week:
+
+  
+          <div class="day-row">
+            <div class="day-label">Sunday:</div>
+            <div class="day-boxes">
+              🟩🟩🟩
+              ▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️
+            </div>
+            <div class="day-total header"><strong>27</strong> (14.14%)</div>
+          </div>
+        
+          <div class="day-row">
+            <div class="day-label">Monday:</div>
+            <div class="day-boxes">
+              🟩🟩
+              ▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️
+            </div>
+            <div class="day-total header"><strong>16</strong> (8.38%)</div>
+          </div>
+        
+          <div class="day-row">
+            <div class="day-label">Tuesday:</div>
+            <div class="day-boxes">
+              🟩🟩🟩
+              ▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️
+            </div>
+            <div class="day-total header"><strong>27</strong> (14.14%)</div>
+          </div>
+        
+          <div class="day-row">
+            <div class="day-label">Wednesday:</div>
+            <div class="day-boxes">
+              🟩🟩🟩
+              ▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️
+            </div>
+            <div class="day-total header"><strong>29</strong> (15.18%)</div>
+          </div>
+        
+          <div class="day-row">
+            <div class="day-label">Thursday:</div>
+            <div class="day-boxes">
+              🟩🟩
+              ▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️
+            </div>
+            <div class="day-total header"><strong>23</strong> (12.04%)</div>
+          </div>
+        
+          <div class="day-row">
+            <div class="day-label">Friday:</div>
+            <div class="day-boxes">
+              🟩🟩🟩🟩
+              ▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️
+            </div>
+            <div class="day-total header"><strong>41</strong> (21.47%)</div>
+          </div>
+        
+          <div class="day-row">
+            <div class="day-label">Saturday:</div>
+            <div class="day-boxes">
+              🟩🟩🟩
+              ▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️
+            </div>
+            <div class="day-total header"><strong>28</strong> (14.66%)</div>
+          </div>
+        
+        <div>&nbsp;</div>
+  </div>
+
+  <!-- Weekday vs Weekend Activity--->
+  <div class="stat">📊 Weekday vs Weekend Activity:</div> 
+    <div class="day-row">
+      <div class="day-label" title='Monday - Friday'>🏢 Weekdays:</div>
+      <div class="day-boxes">
+        🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩
+        ▪️▪️▪️▪️▪️▪️
+      </div>
+      <div class="day-total header"><strong>136</strong> (71.20%)</div>
+    </div>
+    <div class="day-row">
+      <div class="day-label" title='Saturday, and Sunday'>🏖️ Weekends:</div>
+      <div class="day-boxes">
+        🟩🟩🟩🟩🟩🟩        
+        ▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️
+      </div>
+      <div class="day-total header"><strong>55</strong> (28.80%)</div>
+    </div>
+    <div>&nbsp;</div>
+  </div>
+
+  <div class="stat">⏳ Activity by time of day:
+      <div class="day-row">
+        <div class="day-label"><span title='Morning: 00:00am - 07:59am'>🌅 Morning</span>:</div>
+        <div class="day-boxes">
+          🟩
+          ▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️
+        </div>
+        <div class="day-total header"><strong>9</strong> (4.71%)</div>
+      </div>
+
+      <div class="day-row">
+        <div class="day-label"><span title='Daytime: 08:00am - 16:59pm'>🌞 Daytime</span>:</div>
+        <div class="day-boxes">
+          🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩
+          ▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️
+        </div>
+        <div class="day-total header"><strong>93</strong> (48.69%)</div>
+      </div>   
+
+      <div class="day-row">
+        <div class="day-label"><span title='Evening: 17:00pm - 23:59pm'>🌙 Evening</span>:</div>
+        <div class="day-boxes">
+          🟩🟩🟩🟩🟩🟩🟩🟩🟩
+          ▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️▪️
+        </div>
+        <div class="day-total header"><strong>89</strong> (46.60%)</div>
+      </div>
+      <div>&nbsp;</div>
+    </div>
+
+  <h2>📅 Day Visualization</h2>
+  <div class="gap-visualization">
+    <!-- Add hour labels as the top row -->
+    <div class="day-row">
+      <div class="day-label">Hour</div>
+      <div class="day-boxes">
+        
+          <div class="hour-box header" title="Hour 0:00">0</div>
+        
+          <div class="hour-box header" title="Hour 1:00">1</div>
+        
+          <div class="hour-box header" title="Hour 2:00">2</div>
+        
+          <div class="hour-box header" title="Hour 3:00">3</div>
+        
+          <div class="hour-box header" title="Hour 4:00">4</div>
+        
+          <div class="hour-box header" title="Hour 5:00">5</div>
+        
+          <div class="hour-box header" title="Hour 6:00">6</div>
+        
+          <div class="hour-box header" title="Hour 7:00">7</div>
+        
+          <div class="hour-box header" title="Hour 8:00">8</div>
+        
+          <div class="hour-box header" title="Hour 9:00">9</div>
+        
+          <div class="hour-box header" title="Hour 10:00">10</div>
+        
+          <div class="hour-box header" title="Hour 11:00">11</div>
+        
+          <div class="hour-box header" title="Hour 12:00">12</div>
+        
+          <div class="hour-box header" title="Hour 13:00">13</div>
+        
+          <div class="hour-box header" title="Hour 14:00">14</div>
+        
+          <div class="hour-box header" title="Hour 15:00">15</div>
+        
+          <div class="hour-box header" title="Hour 16:00">16</div>
+        
+          <div class="hour-box header" title="Hour 17:00">17</div>
+        
+          <div class="hour-box header" title="Hour 18:00">18</div>
+        
+          <div class="hour-box header" title="Hour 19:00">19</div>
+        
+          <div class="hour-box header" title="Hour 20:00">20</div>
+        
+          <div class="hour-box header" title="Hour 21:00">21</div>
+        
+          <div class="hour-box header" title="Hour 22:00">22</div>
+        
+          <div class="hour-box header" title="Hour 23:00">23</div>
+        
+      </div>
+      <div class="day-total header">Total</div> <!-- Header for the total column -->
+    </div>
+
+    
+          <div class="day-row ">
+            <div class="day-label">May 09 (Fri)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:48:35 a.m. (#599)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 2:50:57 p.m. (#600)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 3 times. 3:25:06 p.m. (#601), 3:32:34 p.m. (#602), 3:39:02 p.m. (#603)">
+                    3
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">5</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">May 08 (Thu)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 12:18:24 p.m. (#596)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:25:18 p.m. (#597)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:18:03 p.m. (#598)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">3</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">May 07 (Wed)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 1:15:19 p.m. (#588), 1:15:20 p.m. (#589)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 3:14:13 p.m. (#590), 3:19:11 p.m. (#591)">
+                    2
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 4:22:30 p.m. (#592), 4:22:33 p.m. (#593)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 9:07:07 p.m. (#594)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:13:25 p.m. (#595)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">8</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">May 06 (Tue)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:22:33 a.m. (#583)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 3:20:59 p.m. (#584), 3:20:59 p.m. (#585)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 7:48:01 p.m. (#586)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:21:56 p.m. (#587)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">5</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">May 05 (Mon)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 7:56:33 a.m. (#581)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:22:58 p.m. (#582)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">2</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row weekend">
+            <div class="day-label">🏖️ May 04 (Sun)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 8:09:00 a.m. (#573), 8:09:10 a.m. (#574)">
+                    2
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 9:28:37 a.m. (#575)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 3 times. 5:58:55 p.m. (#576), 5:59:03 p.m. (#577), 5:59:04 p.m. (#578)">
+                    3
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 8:36:22 p.m. (#579), 8:42:29 p.m. (#580)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">8</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row weekend">
+            <div class="day-label">🏖️ May 03 (Sat)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 9 times. 7:28:52 a.m. (#560), 7:28:53 a.m. (#561), 7:28:54 a.m. (#562), 7:28:54 a.m. (#563), 7:28:55 a.m. (#564), 7:28:55 a.m. (#565), 7:28:55 a.m. (#566), 7:28:56 a.m. (#567), 7:28:56 a.m. (#568)">
+                    9
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 3:22:00 p.m. (#569), 3:30:44 p.m. (#570)">
+                    2
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 4:08:04 p.m. (#571)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:17:44 p.m. (#572)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">13</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">May 02 (Fri)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:39:02 a.m. (#528)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 11:08:01 a.m. (#529)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed hotButtonPressing" title="Pressed 21 times. 1:43:36 p.m. (#530), 1:43:39 p.m. (#531), 1:43:42 p.m. (#532), 1:43:44 p.m. (#533), 1:43:45 p.m. (#534), 1:43:47 p.m. (#535), 1:43:47 p.m. (#536), 1:43:48 p.m. (#537), 1:43:48 p.m. (#538), 1:43:48 p.m. (#539), 1:43:49 p.m. (#540), 1:43:49 p.m. (#541), 1:43:49 p.m. (#542), 1:43:50 p.m. (#543), 1:43:50 p.m. (#544), 1:43:50 p.m. (#545), 1:43:51 p.m. (#546), 1:43:51 p.m. (#547), 1:43:52 p.m. (#548), 1:43:52 p.m. (#549), 1:43:52 p.m. (#550)">
+                    21
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 2:23:33 p.m. (#551)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 7 times. 5:46:11 p.m. (#552), 5:48:48 p.m. (#553), 5:48:48 p.m. (#554), 5:48:49 p.m. (#555), 5:48:49 p.m. (#556), 5:48:51 p.m. (#557), 5:48:52 p.m. (#558)">
+                    7
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 9:22:50 p.m. (#559)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">32</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">May 01 (Thu)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 7:02:12 a.m. (#519), 7:07:24 a.m. (#520)">
+                    2
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:56:52 a.m. (#521)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 9:41:06 a.m. (#522)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:41:50 p.m. (#523)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 5:43:43 p.m. (#524)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:00:19 p.m. (#525)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:57:47 p.m. (#526)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 9:34:20 p.m. (#527)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">9</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 30 (Wed)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:52:52 a.m. (#507)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 11:03:53 a.m. (#508)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 12:18:48 p.m. (#509)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:24:59 p.m. (#510)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 6 times. 4:24:38 p.m. (#511), 4:24:53 p.m. (#512), 4:24:54 p.m. (#513), 4:24:55 p.m. (#514), 4:24:55 p.m. (#515), 4:24:56 p.m. (#516)">
+                    6
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 5:35:07 p.m. (#517)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 9:29:00 p.m. (#518)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:19:23 p.m. (#519)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">13</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 29 (Tue)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 7:30:03 a.m. (#505)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:22:17 p.m. (#506)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">2</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 28 (Mon)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 11:04:35 a.m. (#502)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 2:00:25 p.m. (#503)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:14:03 p.m. (#504)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">3</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row weekend">
+            <div class="day-label">🏖️ Apr 27 (Sun)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 12:34:16 p.m. (#473)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 2:53:15 p.m. (#474)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:47:30 p.m. (#475)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 3 times. 4:18:33 p.m. (#476), 4:18:33 p.m. (#477), 4:18:42 p.m. (#478)">
+                    3
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed hotButtonPressing" title="Pressed 23 times. 6:15:47 p.m. (#479), 6:22:23 p.m. (#480), 6:22:28 p.m. (#481), 6:22:29 p.m. (#482), 6:22:29 p.m. (#483), 6:22:29 p.m. (#484), 6:22:30 p.m. (#485), 6:22:30 p.m. (#486), 6:22:31 p.m. (#487), 6:22:31 p.m. (#488), 6:22:31 p.m. (#489), 6:22:31 p.m. (#490), 6:22:32 p.m. (#491), 6:22:32 p.m. (#492), 6:22:32 p.m. (#493), 6:22:32 p.m. (#494), 6:22:33 p.m. (#495), 6:22:33 p.m. (#496), 6:22:33 p.m. (#497), 6:22:33 p.m. (#498), 6:22:33 p.m. (#499), 6:22:34 p.m. (#500), 6:25:01 p.m. (#501)">
+                    23
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">29</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row weekend">
+            <div class="day-label">🏖️ Apr 26 (Sat)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:41:06 p.m. (#471)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 11:32:03 p.m. (#472)">
+                    1
+                  </div>
+                
+            </div>
+            <div class="day-total ">2</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 25 (Fri)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 8:57:56 a.m. (#455), 8:57:58 a.m. (#456)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 3:21:08 p.m. (#457), 3:46:42 p.m. (#458)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed hotButtonPressing" title="Pressed 11 times. 8:48:57 p.m. (#459), 8:49:11 p.m. (#460), 8:49:12 p.m. (#461), 8:49:13 p.m. (#462), 8:49:15 p.m. (#463), 8:49:16 p.m. (#464), 8:49:17 p.m. (#465), 8:49:18 p.m. (#466), 8:49:21 p.m. (#467), 8:49:21 p.m. (#468), 8:49:22 p.m. (#469)">
+                    11
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 9:14:13 p.m. (#470)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">16</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 24 (Thu)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:28:39 a.m. (#452)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:19:47 p.m. (#453)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 7:59:16 p.m. (#454)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">3</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 23 (Wed)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 3 times. 3:20:51 p.m. (#441), 3:21:37 p.m. (#442), 3:23:34 p.m. (#443)">
+                    3
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 8 times. 5:25:31 p.m. (#444), 5:25:37 p.m. (#445), 5:25:38 p.m. (#446), 5:25:38 p.m. (#447), 5:25:38 p.m. (#448), 5:25:39 p.m. (#449), 5:25:39 p.m. (#450), 5:25:39 p.m. (#451)">
+                    8
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">11</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 22 (Tue)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 11:10:34 a.m. (#418)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed hotButtonPressing" title="Pressed 21 times. 3:15:11 p.m. (#419), 3:15:45 p.m. (#420), 3:16:03 p.m. (#421), 3:16:06 p.m. (#422), 3:16:35 p.m. (#423), 3:16:53 p.m. (#424), 3:17:13 p.m. (#425), 3:17:16 p.m. (#426), 3:17:27 p.m. (#427), 3:17:30 p.m. (#428), 3:17:30 p.m. (#429), 3:17:31 p.m. (#430), 3:17:31 p.m. (#431), 3:17:31 p.m. (#432), 3:17:32 p.m. (#433), 3:17:33 p.m. (#434), 3:17:40 p.m. (#435), 3:17:40 p.m. (#436), 3:19:14 p.m. (#437), 3:21:12 p.m. (#438), 3:21:17 p.m. (#439)">
+                    21
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 7:40:17 p.m. (#440)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">23</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 21 (Mon)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 12:12:59 p.m. (#417)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">1</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row weekend">
+            <div class="day-label">🏖️ Apr 20 (Sun)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 11:43:02 a.m. (#410)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 2:46:24 p.m. (#411)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:19:27 p.m. (#412)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 4 times. 9:26:23 p.m. (#413), 9:26:55 p.m. (#414), 9:27:15 p.m. (#415), 9:27:17 p.m. (#416)">
+                    4
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">7</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row weekend">
+            <div class="day-label">🏖️ Apr 19 (Sat)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:47:42 p.m. (#407)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 10:53:22 p.m. (#408), 10:53:38 p.m. (#409)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">3</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 18 (Fri)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed hotButtonPressing" title="Pressed 40 times. 12:42:56 p.m. (#365), 12:43:02 p.m. (#366), 12:43:14 p.m. (#367), 12:43:15 p.m. (#368), 12:43:16 p.m. (#369), 12:43:16 p.m. (#370), 12:43:16 p.m. (#371), 12:43:18 p.m. (#372), 12:43:23 p.m. (#373), 12:43:23 p.m. (#374), 12:43:23 p.m. (#375), 12:43:26 p.m. (#376), 12:43:28 p.m. (#377), 12:43:35 p.m. (#378), 12:43:47 p.m. (#379), 12:44:08 p.m. (#380), 12:44:08 p.m. (#381), 12:44:09 p.m. (#382), 12:44:09 p.m. (#383), 12:45:15 p.m. (#384), 12:45:22 p.m. (#385), 12:45:43 p.m. (#386), 12:45:44 p.m. (#387), 12:45:44 p.m. (#388), 12:45:44 p.m. (#389), 12:45:44 p.m. (#390), 12:45:45 p.m. (#391), 12:45:45 p.m. (#392), 12:45:45 p.m. (#393), 12:45:46 p.m. (#394), 12:45:46 p.m. (#395), 12:45:46 p.m. (#396), 12:45:47 p.m. (#397), 12:45:47 p.m. (#398), 12:45:47 p.m. (#399), 12:45:48 p.m. (#400), 12:45:48 p.m. (#401), 12:45:48 p.m. (#402), 12:45:48 p.m. (#403), 12:45:49 p.m. (#404)">
+                    40
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 5:45:49 p.m. (#405)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 7:45:49 p.m. (#406)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">42</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 17 (Thu)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 11:31:05 a.m. (#364)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">1</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 16 (Wed)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:23:39 p.m. (#362)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:09:27 p.m. (#363)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">2</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 15 (Tue)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:24:31 p.m. (#359)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:04:11 p.m. (#360)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:26:00 p.m. (#361)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">3</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 14 (Mon)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 4 times. 8:02:58 a.m. (#352), 8:03:10 a.m. (#353), 8:03:11 a.m. (#354), 8:27:59 a.m. (#355)">
+                    4
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:53:13 a.m. (#356)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:21:01 p.m. (#357)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 5:27:11 p.m. (#358)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">7</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row weekend">
+            <div class="day-label">🏖️ Apr 13 (Sun)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 12:22:26 p.m. (#350)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:19:29 p.m. (#351)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">2</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row weekend">
+            <div class="day-label">🏖️ Apr 12 (Sat)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 9:44:03 a.m. (#346)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:45:41 p.m. (#347)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 7:00:19 p.m. (#348)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:34:38 p.m. (#349)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">4</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 11 (Fri)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 9:01:13 a.m. (#320)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 12:11:52 p.m. (#321)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:25:06 p.m. (#322)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 4:52:18 p.m. (#323), 4:52:21 p.m. (#324)">
+                    2
+                  </div>
+                
+                  <div class="hour-box pressed hotButtonPressing" title="Pressed 17 times. 5:03:04 p.m. (#325), 5:03:04 p.m. (#326), 5:03:05 p.m. (#327), 5:15:11 p.m. (#328), 5:15:11 p.m. (#329), 5:15:11 p.m. (#330), 5:16:11 p.m. (#331), 5:16:12 p.m. (#332), 5:16:12 p.m. (#333), 5:16:14 p.m. (#334), 5:16:14 p.m. (#335), 5:16:15 p.m. (#336), 5:16:16 p.m. (#337), 5:19:10 p.m. (#338), 5:19:10 p.m. (#339), 5:25:19 p.m. (#340), 5:25:22 p.m. (#341)">
+                    17
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:36:11 p.m. (#342)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 7:24:41 p.m. (#343)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 8:32:36 p.m. (#344), 8:32:54 p.m. (#345)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">26</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 10 (Thu)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 3:20:58 p.m. (#316), 3:20:59 p.m. (#317)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:50:31 p.m. (#318)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:19:46 p.m. (#319)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">4</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 09 (Wed)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 7:57:42 a.m. (#311)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 4:32:27 p.m. (#312)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:23:18 p.m. (#313)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 7:02:33 p.m. (#314)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:20:33 p.m. (#315)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">5</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 08 (Tue)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 2:53:54 p.m. (#307)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 4:52:54 p.m. (#308)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 5:50:12 p.m. (#309)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:17:38 p.m. (#310)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">4</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 07 (Mon)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 3 times. 10:57:57 a.m. (#303), 10:58:15 a.m. (#304), 10:58:16 a.m. (#305)">
+                    3
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:44:15 p.m. (#306)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">4</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row weekend">
+            <div class="day-label">🏖️ Apr 06 (Sun)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:43:53 a.m. (#293)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 12:41:09 p.m. (#294), 12:41:10 p.m. (#295)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:29:32 p.m. (#296)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 4:58:10 p.m. (#297)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 6:12:20 p.m. (#298), 6:12:22 p.m. (#299)">
+                    2
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 7:37:06 p.m. (#300)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:24:30 p.m. (#301)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 11:34:03 p.m. (#302)">
+                    1
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">10</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row weekend">
+            <div class="day-label">🏖️ Apr 05 (Sat)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:58:27 a.m. (#210)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed hotButtonPressing" title="Pressed 29 times. 10:43:00 a.m. (#211), 10:43:28 a.m. (#212), 10:43:29 a.m. (#213), 10:43:30 a.m. (#214), 10:43:31 a.m. (#215), 10:43:32 a.m. (#216), 10:43:33 a.m. (#217), 10:43:34 a.m. (#218), 10:43:35 a.m. (#219), 10:43:36 a.m. (#220), 10:43:37 a.m. (#221), 10:43:38 a.m. (#222), 10:43:39 a.m. (#223), 10:43:40 a.m. (#224), 10:43:41 a.m. (#225), 10:43:42 a.m. (#226), 10:43:44 a.m. (#227), 10:43:44 a.m. (#228), 10:43:46 a.m. (#227), 10:43:47 a.m. (#228), 10:43:48 a.m. (#229), 10:43:49 a.m. (#230), 10:43:49 a.m. (#231), 10:43:50 a.m. (#232), 10:43:51 a.m. (#233), 10:43:53 a.m. (#234), 10:43:54 a.m. (#235), 10:43:55 a.m. (#236), 10:43:56 a.m. (#237)">
+                    29
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 7 times. 1:11:49 p.m. (#238), 1:11:53 p.m. (#239), 1:12:03 p.m. (#240), 1:12:04 p.m. (#241), 1:12:05 p.m. (#242), 1:12:14 p.m. (#243), 1:21:35 p.m. (#244)">
+                    7
+                  </div>
+                
+                  <div class="hour-box pressed hotButtonPressing" title="Pressed 40 times. 2:00:33 p.m. (#245), 2:01:00 p.m. (#246), 2:01:31 p.m. (#247), 2:01:36 p.m. (#248), 2:01:36 p.m. (#249), 2:01:38 p.m. (#250), 2:01:39 p.m. (#251), 2:01:40 p.m. (#252), 2:01:41 p.m. (#253), 2:01:42 p.m. (#254), 2:01:42 p.m. (#255), 2:01:44 p.m. (#256), 2:01:45 p.m. (#257), 2:01:46 p.m. (#258), 2:01:47 p.m. (#259), 2:01:48 p.m. (#260), 2:01:49 p.m. (#261), 2:01:50 p.m. (#262), 2:01:51 p.m. (#263), 2:01:52 p.m. (#264), 2:01:53 p.m. (#265), 2:01:54 p.m. (#266), 2:01:55 p.m. (#267), 2:01:56 p.m. (#268), 2:01:57 p.m. (#269), 2:01:58 p.m. (#270), 2:01:59 p.m. (#271), 2:02:00 p.m. (#272), 2:02:01 p.m. (#273), 2:02:02 p.m. (#274), 2:02:03 p.m. (#275), 2:03:01 p.m. (#276), 2:03:02 p.m. (#277), 2:03:03 p.m. (#278), 2:03:19 p.m. (#279), 2:03:21 p.m. (#280), 2:03:23 p.m. (#281), 2:03:31 p.m. (#282), 2:03:31 p.m. (#283), 2:03:33 p.m. (#284)">
+                    40
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 4:11:32 p.m. (#285), 4:59:41 p.m. (#286)">
+                    2
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 5:51:01 p.m. (#287)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 6:34:54 p.m. (#288)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 3 times. 7:23:32 p.m. (#289), 7:29:56 p.m. (#290), 7:34:05 p.m. (#291)">
+                    3
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:16:59 p.m. (#292)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">85</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 04 (Fri)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box pressed " title="Pressed 1 times. 12:00:41 a.m. (#201)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 9:15:55 a.m. (#202), 9:15:58 a.m. (#203)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 11:18:42 a.m. (#204)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 4:48:30 p.m. (#205)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 6:08:42 p.m. (#205), 6:54:50 p.m. (#206)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:10:52 p.m. (#207)">
+                    1
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 11:16:11 p.m. (#208), 11:16:13 p.m. (#209)">
+                    2
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">10</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 03 (Thu)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 2:19:25 p.m. (#192)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 7 times. 5:02:25 p.m. (#193), 5:40:55 p.m. (#194), 5:40:57 p.m. (#195), 5:40:58 p.m. (#196), 5:40:58 p.m. (#197), 5:40:59 p.m. (#198), 5:41:00 p.m. (#199)">
+                    7
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 9:11:33 p.m. (#200)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">9</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 02 (Wed)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:06:10 a.m. (#186)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 15:00 - 16:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 3 times. 4:10:02 p.m. (#187), 4:10:21 p.m. (#188), 4:10:22 p.m. (#189)">
+                    3
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 5:45:25 p.m. (#190)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:40:25 p.m. (#191)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">6</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Apr 01 (Tue)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 6 times. 3:14:05 p.m. (#156), 3:14:10 p.m. (#157), 3:14:14 p.m. (#158), 3:14:39 p.m. (#159), 3:15:02 p.m. (#160), 3:28:36 p.m. (#161)">
+                    6
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 5:24:31 p.m. (#162), 5:39:43 p.m. (#163)">
+                    2
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 18:00 - 19:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 2 times. 7:10:40 p.m. (#164), 7:11:20 p.m. (#165)">
+                    2
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 8:02:48 p.m. (#166)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 10:19:37 p.m. (#167)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total day-total-hot">12</div> <!-- Total entries for the day -->
+          </div>
+        
+          <div class="day-row ">
+            <div class="day-label">Mar 31 (Mon)</div>
+            <div class="day-boxes">
+              
+                  <div class="hour-box gap " title="No presses during 0:00 - 1:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 1:00 - 2:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 2:00 - 3:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 3:00 - 4:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 4:00 - 5:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 5:00 - 6:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 6:00 - 7:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 7:00 - 8:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 8:00 - 9:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 9:00 - 10:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 10:00 - 11:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 11:00 - 12:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 12:00 - 13:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 13:00 - 14:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 14:00 - 15:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 1 times. 3:50:16 p.m. (#152)">
+                    1
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 16:00 - 17:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 17:00 - 18:00">
+                    
+                  </div>
+                
+                  <div class="hour-box pressed " title="Pressed 3 times. 6:10:45 p.m. (#153), 6:59:41 p.m. (#154), 6:59:49 p.m. (#155)">
+                    3
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 19:00 - 20:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 20:00 - 21:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 21:00 - 22:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 22:00 - 23:00">
+                    
+                  </div>
+                
+                  <div class="hour-box gap " title="No presses during 23:00 - 24:00">
+                    
+                  </div>
+                
+            </div>
+            <div class="day-total ">4</div> <!-- Total entries for the day -->
+          </div>
+        
+  </div>
+
+  <div style='text-align: center'><p>Generated on: <strong>May 09, 03:39:02 PM</strong></p></div>
+  </div> <!-- End of stats div -->
+
+  <span id='LastUpdated'>2025-05-09, 3:39:02 p.m.</span>
+  
