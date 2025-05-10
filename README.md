@@ -6,18 +6,11 @@ The project is over when the counter reaches zero. The counter is reset if someo
 
 To see how long this project survives and how people interact with the button. Will they keep pressing the button to keep this project alive? Will they destroy the button? What kind of people press the button? What kind of people don't.
 
-This [repo](https://github.com/funvill/counterproductive) contains the source code files for the **CounterProductive** project.
+This Github [repo](https://github.com/funvill/counterproductive) contains the source code files for the **CounterProductive** project.
 
 - See the [CounterProductive Project Page](https://blog.abluestar.com/projects/2025-counterproductive/) for more information about this project.
 - See the [CounterProductive Live Stats](https://blog.abluestar.com/other/counterproductive.html) for the current live status of this project and its history.
-
-## Printed Project instructions
-
-**Instructions:**
-
-- Press the button to reset the 24-hour countdown timer.
-- If the timer ever reaches zero, the project ends and will be removed.
-- To keep the project alive — press the button
+- The [Printed Project instructions](https://github.com/funvill/counterproductive/blob/main/docs/instructions.pdf) are attached to the physical button.
 
 ## LED Matrix prompts
 

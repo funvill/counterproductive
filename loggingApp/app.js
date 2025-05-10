@@ -15,7 +15,7 @@ const sendGist = require('./sendGist');
 
 // Consts 
 const MQTT_CLIENT_ID = 'COUNTER_PRODUCTIVE';
-const APP_VERSION = '2025Apr11';
+const APP_VERSION = '2025May09';
 
 // Load the settings from a JSON file
 const SETTINGS_FILE = 'settings.json';
@@ -42,6 +42,26 @@ console.log(`| https://blog.abluestar.com/projects/2025-counterproductive/      
 console.log(`| VERSION: ${APP_VERSION}                                                |`);
 console.log(`*-------------------------------------------------------------------*`);
 
+
+const SOUND_REPORT = 1;
+function PlaySound(type) {
+  if (type == SOUND_REPORT) {
+
+    // Check to see if "sound-play" is installed
+    // If not, then we will use the BELL character to make a sound
+    try {
+      var sound = require('sound-play')
+      const filePath = path.join(__dirname, settings.notificationSound);
+      sound.play(filePath);
+    } catch (error) {
+      console.error(`❌ Failed to play sound: ${error}. File: ${filePath}`);
+      // Print the BELL character to the console to make a sound instead.
+      process.stdout.write('\x07');
+    }
+  } else {
+    process.stdout.write('\x07');
+  }
+}
 
 async function Start() {
 
@@ -93,6 +113,7 @@ async function Start() {
         });
         console.log(`📤 Report Gist updated: ${reportResult.html_url}#file-counterproductive-report-html`);
 
+        // Send the heartbeat file to Gist
         const heartbeatResult = await new Promise((resolve, reject) => {
           sendGist(heartbeatFilePath, settings.githubToken, settings.gistId, 'heartbeat.json', (err, data) => {
             if (err) reject(err);
@@ -206,6 +227,9 @@ function OnMessageCountIncrease(topic, message) {
               console.error(`❌ Failed to send report file to Gist: ${err}`);
             } else {
               console.log("\t📤 Gist updated:", data.html_url);
+
+              // Print the BELL character to the console to make a sound
+              PlaySound(SOUND_REPORT);
             }
           });
         }
@@ -216,10 +240,29 @@ function OnMessageCountIncrease(topic, message) {
 
 
 
-
+var lastHeartbeatSentTimer = 0;
 // We do not want this message to be noisy. So we silence it unless there is an error
 function OnMessageHeartBeat(topic, message) {
   // console.log(`\t❤️ Received heartbeat: ${message}`);
+
+  // Github Gist rate limit is 60 requests per hour
+  // We don't want the heatbeat to send too many requests so that the report can not be sent.
+  // The average report is sent once every 2 hours, but there are exceptions where the users have pressed 
+  // the button multiple times in a row.
+  // So we only want to send the heartbeat once every 5 minutes. (12 times an hour)
+  const HEARTBEAT_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+  const currentTime = new Date().getTime();
+  const timeSinceLastHeartbeat = currentTime - lastHeartbeatSentTimer;
+  if (timeSinceLastHeartbeat < HEARTBEAT_INTERVAL) {
+    // Don't send the heartbeat, its too soon
+    process.stdout.write('🩶');
+    return;
+  }
+  lastHeartbeatSentTimer = currentTime;
+
+  // Write the heartbeat to a file
+  // Send the heartbeat to Gist
 
   const heatbeatFileName = 'heartbeat.json';
   const heartbeatFilePath = path.join(__dirname, heatbeatFileName);

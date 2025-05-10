@@ -1,6 +1,6 @@
 {
   "name": "counterproductive",
-  "version": "1",
+  "version": "2",
   "description": "",
   "url": "https://blog.abluestar.com/projects/2025-counterproductive/",
   "main": "app.js",
@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "axios": "^1.8.4",
-    "mqtt": "^5.10.4"
+    "mqtt": "^5.10.4",
+    "sound-play": "^1.1.0"
   },
   "devDependencies": {
     "esbuild": "^0.25.2"
