@@ -9,7 +9,7 @@
  *
  */
 
-static const char VERSION[] = "Ver 4";  // Version
+static const char VERSION[] = "Ver 5";  // Version
 
 // Pins
 // ------------------------------------------------------
@@ -18,15 +18,15 @@ static const int PIN_MATRIX_CS = 23;  // D5
 
 // Global
 // ------------------------------------------------------
-static int g_counter = 0; // How many times the button has been pressed
+static int g_counter = 0;           // How many times the button has been pressed
 static long g_lastButtonPress = 0;  // Last time the button was pressed
 static boolean g_wait_for_mqtt_recv = true;
-static boolean g_gameState = true; // If the gamestate is ever false. Game over
+static boolean g_gameState = true;     // If the gamestate is ever false. Game over
+static boolean g_sayThankYou = false;  // If we need to say thank you for pressing the button
 
-// Consts 
+// Consts
 // ------------------------------------------------------
 static long TIMER_COUNT_DOWN_24HOURS = 24 * 60 * 60 * 1000;  // 24 hours in milliseconds
-// static long TIMER_COUNT_DOWN_24HOURS = 60 * 1000;  // Testing death state.
 
 // Button Debounce
 // ------------------------------------------------------
@@ -92,7 +92,7 @@ PubSubClient client(espClient);
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
-    ledMatrix.print("W rec");
+    ledMatrix.print("W MQTT");
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     if (client.connect("arduinoClient")) {
@@ -113,7 +113,7 @@ void reconnect() {
 
 // This function is called when the MQTT client receive s a new MQTT payload
 void callback(char *topic, byte *payload, unsigned int length) {
-  
+
   // Print the message to the console.
   Serial.print("Message arrived [");
   Serial.print(topic);
@@ -140,15 +140,15 @@ void callback(char *topic, byte *payload, unsigned int length) {
 // the setup function runs once when you press reset or power the board
 void setup() {
 
-  // It takes a bit of time for the system to start the serial port. 
-  delay(500);  
+  // It takes a bit of time for the system to start the serial port.
+  delay(500);
   Serial.begin(9600);
   delay(500);
- 
-  pinMode(LED_BUILTIN, OUTPUT); // Initialize digital pin LED_BUILTIN as an output.
-  digitalWrite(LED_BUILTIN, ledState); // Set initial LED state
 
-  pinMode(PIN_BUTTON, INPUT_PULLUP); // Initialize Big Button as an input with a pullup
+  pinMode(LED_BUILTIN, OUTPUT);         // Initialize digital pin LED_BUILTIN as an output.
+  digitalWrite(LED_BUILTIN, ledState);  // Set initial LED state
+
+  pinMode(PIN_BUTTON, INPUT_PULLUP);  // Initialize Big Button as an input with a pullup
 
   // LED maxtrix
   ledMatrix.begin();          // initialize the object
@@ -158,11 +158,11 @@ void setup() {
 
   // Print version
   ledMatrix.print(VERSION);
-  delay(1000 * 3); // Give the user some time to see the version.
+  delay(1000 * 3);  // Give the user some time to see the version.
 
   // WIFI
-  ledMatrix.print("W0");  
-  WiFi.begin(SETTING_WIFI_SSID, SETTING_WIFI_PASSWORD); // connecting to a WiFi network
+  ledMatrix.print("W Conn");
+  WiFi.begin(SETTING_WIFI_SSID, SETTING_WIFI_PASSWORD);  // connecting to a WiFi network
   static int wifiAttempts = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -171,7 +171,7 @@ void setup() {
     Serial.println(wifiAttempts);
   }
 
-  // We are connected. 
+  // We are connected.
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.print("IP address: ");
@@ -188,9 +188,9 @@ void setup() {
   g_lastButtonPress = millis();  // Set the last button press to now
 }
 
-// The user has pushed the button. 
+// The user has pushed the button.
 // - Update the display
-// - Send a notification to MQTT 
+// - Send a notification to MQTT
 void UpdateCounter(int count) {
   if (g_wait_for_mqtt_recv) {
     // We are waiting for the first receive  before we can change the count
@@ -199,10 +199,12 @@ void UpdateCounter(int count) {
 
   // Clear the existing message
   ledMatrix.displayReset();
+  ledMatrix.displayClear();
 
   // Update the buffer with
-  sprintf(matrixBuffer, "# %d      Thank you for keeping me alive", count);
-  ledMatrix.displayText(matrixBuffer, PA_RIGHT, scrollSpeed, scrollPause, PA_PRINT, PA_SCROLL_LEFT);
+  sprintf(matrixBuffer, "# %d", count);
+  ledMatrix.displayText(matrixBuffer, PA_CENTER, scrollSpeed, scrollPause, PA_PRINT, PA_SCROLL_LEFT);
+  g_sayThankYou = true;
 
   // Send MQTT message
   Serial.println("");
@@ -233,7 +235,7 @@ void SendHeartBeat() {
 // Check to see if the button has been pressed.
 void CheckButton() {
   if (g_wait_for_mqtt_recv) {
-    // Don't bother until we get the first receive 
+    // Don't bother until we get the first receive
     return;
   }
   // read the state of the switch into a local variable:
@@ -302,7 +304,75 @@ void DisplayCountDownTimer() {
 }
 
 void DisplayCallToAction() {
-  sprintf(matrixBuffer, "Keep me Alive - Press the Button");
+
+  static int callToActionOffset = 0;
+  callToActionOffset++;
+
+  switch (callToActionOffset) {
+    case 1:
+      sprintf(matrixBuffer, "Do Not Let Me Die - Press the Button");
+      break;
+    case 2:
+      sprintf(matrixBuffer, "Time is Running Out - Press the Button");
+      break;
+    case 3:
+      sprintf(matrixBuffer, "Press Before Its Too Late - Press the Button");
+      break;
+    case 4:
+      sprintf(matrixBuffer, "This Button Fears Oblivion - Press the Button");
+      break;
+    case 5:
+      sprintf(matrixBuffer, "Every Press Delays the Inevitable - Press the Button");
+      break;
+    case 6:
+      sprintf(matrixBuffer, "Help Me Stay Awake - Press the Button");
+      break;
+    case 7:
+      sprintf(matrixBuffer, "Tap Me to Save the Day - Press the Button");
+      break;
+    case 8:
+      sprintf(matrixBuffer, "I Exist Because You Care - Press the Button");
+      break;
+    case 9:
+      sprintf(matrixBuffer, "The System Demands Your Touch");
+      break;
+    case 10:
+      sprintf(matrixBuffer, "Press the button Now. Explain Later");
+      break;
+    case 11:
+      sprintf(matrixBuffer, "This Moment Needs You - Press the Button");
+      break;
+    case 12:
+      sprintf(matrixBuffer, "HELP! - Press the Button");
+      break;
+    case 13:
+      sprintf(matrixBuffer, "Keep It Going - Press the Button");
+      break;
+    case 14:
+      sprintf(matrixBuffer, "You Make This Happen - Press the Button");
+      break;
+    case 15:
+      sprintf(matrixBuffer, "One Press Cant Hurt - Press the Button");
+      break;
+    case 16:
+      sprintf(matrixBuffer, "Be Part of the Story - Press the Button");
+      break;
+    case 17:
+      sprintf(matrixBuffer, "The Power Is in Your finger - Press the Button");
+      break;
+    case 18:
+      sprintf(matrixBuffer, "Keep the Streak Alive - Press the Button");
+      break;
+    case 19:
+      sprintf(matrixBuffer, "Keep the Signal Alive - Press the Button");
+      break;
+    default:
+      {
+        sprintf(matrixBuffer, "Keep me Alive - Press the Button");
+        callToActionOffset = 0;
+      }
+  }
+
   ledMatrix.displayText(matrixBuffer, scrollAlign, scrollSpeed, scrollPause, PA_SCROLL_LEFT, PA_SCROLL_UP);
 }
 
@@ -320,20 +390,28 @@ void loop() {
   while (ledMatrix.displayAnimate()) {  // animate the display
     ledMatrix.displayReset();
 
-    if( ! g_gameState) {
+    if (!g_gameState) {
       // Game over
-      sprintf(matrixBuffer, "GAME OVER. I have died");
+      sprintf(matrixBuffer, "GAME OVER. I have died. # %d", g_counter);
       ledMatrix.displayText(matrixBuffer, scrollAlign, scrollSpeed, scrollPause, PA_SCROLL_LEFT, PA_SCROLL_UP);
-      return ;
+      return;
     }
 
-    // Toggle between the count down timer and a call to action
-    static boolean idle_text = true;
-    idle_text = !idle_text;
-    if (idle_text) {
-      DisplayCountDownTimer();
+    if (g_sayThankYou) {
+      // Say thank you after showing the button count
+      g_sayThankYou = false;
+      sprintf(matrixBuffer, "Thank you for keeping me alive");
+      ledMatrix.displayText(matrixBuffer, PA_RIGHT, scrollSpeed, scrollPause, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
+      return; 
     } else {
-      DisplayCallToAction();
+      // Toggle between the count down timer and a call to action
+      static boolean idle_text = true;
+      idle_text = !idle_text;
+      if (idle_text) {
+        DisplayCountDownTimer();
+      } else {
+        DisplayCallToAction();
+      }
     }
   }
 
@@ -344,14 +422,14 @@ void loop() {
 
   // Check for death
   int timeLeftInSeconds = (TIMER_COUNT_DOWN_24HOURS - (currentMillis - g_lastButtonPress)) / 1000;  // in seconds
-  if(g_gameState && timeLeftInSeconds <= 0 ) {
+  if (g_gameState && timeLeftInSeconds <= 0) {
     g_gameState = false;  // DEAD Game over!
   }
 
   // Update the heartbeat
   // Update the status LED
   static long heartBeatTimer = 0;
-  const long INTERVAL_HEARTBEAT = 1000 * 60; // 60 Seconds
+  const long INTERVAL_HEARTBEAT = 1000 * 60;  // 60 Seconds
   if (currentMillis >= heartBeatTimer + INTERVAL_HEARTBEAT) {
     heartBeatTimer = currentMillis;
 
@@ -361,7 +439,7 @@ void loop() {
 
   // Update the status LED
   static long builtInLEDTimer = 0;
-  static long INTERVAL_STATUS_LED = 1000; // 1 second
+  static long INTERVAL_STATUS_LED = 1000;  // 1 second
   if (currentMillis >= builtInLEDTimer + INTERVAL_STATUS_LED) {
     builtInLEDTimer = currentMillis;
 
